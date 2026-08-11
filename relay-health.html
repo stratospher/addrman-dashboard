@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay health</title>
+<style>
+  :root{
+    color-scheme: light;
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--text-primary);
+       font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 24px 80px}
+  .wrap{max-width:1080px;margin:0 auto}
+  a{color:var(--series-1)}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:6px}
+  h1{font-size:24px;margin:0;letter-spacing:-0.01em}
+  .crumb{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .sub{color:var(--text-secondary);margin:0 0 28px;max-width:72ch}
+  button{font:inherit;cursor:pointer}
+  .btn{background:var(--surface-1);color:var(--text-secondary);border:1px solid var(--border);
+       border-radius:7px;padding:6px 11px;font-size:13px}
+  .btn:hover{color:var(--text-primary);border-color:var(--muted)}
+  .btn[aria-pressed="true"]{background:var(--series-1);border-color:var(--series-1);color:#fff}
+  .btn:focus-visible{outline:2px solid var(--series-1);outline-offset:2px}
+
+  #drop{border:1.5px dashed var(--axis);border-radius:12px;padding:44px 24px;text-align:center;
+        background:var(--surface-1)}
+  #drop.over{border-color:var(--series-1)}
+  #drop h3{margin:0 0 6px;font-size:17px}
+  #drop p{margin:0 0 16px;color:var(--text-secondary);font-size:14px}
+  .filelabel{display:inline-block;background:var(--series-1);color:#fff;border-radius:8px;
+             padding:9px 18px;font-size:14px;font-weight:500;cursor:pointer}
+  .filelabel:focus-within{outline:2px solid var(--series-1);outline-offset:2px}
+  #file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  pre.cmd{text-align:left;background:var(--page);border:1px solid var(--border);border-radius:8px;
+          padding:12px 14px;font-size:12.5px;overflow-x:auto;max-width:760px;margin:18px auto 0;
+          font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-secondary)}
+  #err{display:none;margin-top:18px;border-left:3px solid var(--critical);background:var(--page);
+       padding:11px 14px;border-radius:0 7px 7px 0;font-size:14px;color:var(--text-secondary);text-align:left}
+  #busy{display:none;margin-top:18px;color:var(--text-secondary);font-size:14px}
+
+  .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;background:var(--surface-1);
+       border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:20px}
+  .bar .grp{display:flex;align-items:center;gap:8px}
+  .bar label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  select{font:inherit;font-size:13px;background:var(--page);color:var(--text-primary);
+         border:1px solid var(--border);border-radius:7px;padding:5px 8px;max-width:340px}
+  .spacer{flex:1}
+  .fname{font-size:13px;color:var(--text-secondary);
+         font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .pill{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+        border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--text-secondary)}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:26px}
+  .tile{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:15px 17px}
+  .tile .k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .tile .v{font-size:27px;line-height:1.15;margin-top:7px;letter-spacing:-0.02em}
+  .tile .n{font-size:12.5px;color:var(--text-secondary);margin-top:5px;display:flex;align-items:center;gap:6px}
+  .sdot{width:8px;height:8px;border-radius:50%;flex:none}
+
+  .card{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;
+        padding:18px 20px 14px;margin-bottom:18px}
+  .chead{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+  .chead h3{margin:0;font-size:15.5px;font-weight:600}
+  .cs{font-size:13px;color:var(--text-secondary);margin:3px 0 14px}
+  .plot{width:100%;overflow-x:auto}
+  svg{display:block}
+  .tbl{display:none;margin-top:12px;max-height:340px;overflow:auto}
+  table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+  th,td{text-align:right;padding:5px 10px;border-bottom:1px solid var(--grid);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  thead th{position:sticky;top:0;background:var(--surface-1);color:var(--muted);
+           font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 0 2px}
+  .lg{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary)}
+  .lg i{width:11px;height:11px;border-radius:3px;flex:none;display:block}
+
+  #tip{position:fixed;pointer-events:none;z-index:50;display:none;background:var(--surface-1);
+       border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;
+       box-shadow:0 6px 22px rgba(0,0,0,.16);max-width:300px}
+  #tip .tt{font-weight:600;margin-bottom:3px}
+  #tip .tr{color:var(--text-secondary);font-variant-numeric:tabular-nums}
+
+  .note{border-left:3px solid var(--axis);padding:2px 0 2px 14px;color:var(--text-secondary);
+        font-size:13.5px;margin:16px 0}
+  .warn{border-left-color:var(--warning)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+       background:var(--page);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+  h2.sec{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+         margin:34px 0 14px;font-weight:600}
+  #main{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb"><a href="index.html">← Dashboards</a></div>
+  <header>
+    <h1>Relay health</h1>
+    <button class="btn" id="themeBtn" type="button">Theme</button>
+  </header>
+  <p class="sub">
+    Address-relay volume, packing and rate limiting over time, from a node's own
+    <code>debug.log</code>. Parsed in this page — the file never leaves your machine.
+  </p>
+
+  <div id="drop">
+    <h3>Open a grepped debug.log</h3>
+    <p>Drag a file here, or</p>
+    <label class="filelabel">Choose file<input type="file" id="file" accept=".txt,.log,.gz"></label>
+    <pre class="cmd"># both line types into one file — needs debug=net on the node
+zstdcat -f ~/.bitcoin/debug.log*.zst ~/.bitcoin/debug.log 2>/dev/null \
+  | grep -E 'Received addr:|sending getaddr' | sort > relay.txt</pre>
+    <p style="margin-top:14px;font-size:13px">
+      The <code>sending getaddr</code> lines are optional but let solicited replies be
+      told apart from unsolicited bulk pushes. <code>.gz</code> works; for
+      <code>.zst</code> decompress first.
+    </p>
+    <div id="busy">Parsing…</div>
+    <div id="err"></div>
+  </div>
+
+  <div id="main">
+    <div class="bar">
+      <span class="pill" id="srcpill"></span>
+      <div class="grp"><label for="gran">Bucket</label>
+        <select id="gran"><option value="day" selected>Per day</option><option value="hour">Per hour</option></select></div>
+      <div class="grp"><label for="rangesel">Range</label>
+        <select id="rangesel">
+          <option value="0" selected>All</option>
+          <option value="30">Last 30 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="7">Last 7 days</option>
+        </select></div>
+      <div class="spacer"></div>
+      <span class="fname" id="fname"></span>
+      <button class="btn" id="reset" type="button">Load another</button>
+    </div>
+
+    <div id="fallback" class="note warn" style="display:none"></div>
+    <div class="kpis" id="kpis"></div>
+
+    <h2 class="sec">Volume</h2>
+    <div class="card">
+      <div class="chead"><h3>Addresses received</h3>
+        <button class="btn" data-tbl="t-addr" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-addr"></div>
+      <div class="plot" id="c-addr"></div>
+      <div class="tbl" id="t-addr"></div>
+      <p class="note" style="margin-bottom:2px">
+        The headline total. Volume alone does not tell you much — a surge made of
+        re-announcements of addresses you already hold updates <code>nTime</code> in place
+        and inserts nothing, so it costs no eviction. Read this against packing below:
+        address volume is not addrman pressure, address novelty is.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><h3>Addresses received, split by channel</h3>
+        <button class="btn" data-tbl="t-vol" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-vol"></div>
+      <div class="plot" id="c-vol"></div>
+      <div class="legend" id="l-vol"></div>
+      <div class="tbl" id="t-vol"></div>
+      <p class="note" style="margin-bottom:2px">
+        The <b>≤10</b> band is the only one Core will relay onward
+        (<code>net_processing.cpp</code>: <code>nTime &gt; now−10min &amp;&amp; !m_getaddr_sent
+        &amp;&amp; vAddr.size() &lt;= 10 &amp;&amp; IsRoutable</code>), so it is the amplified
+        channel. <b>11–99</b> is a peer flushing a backed-up relay queue — a second-order
+        gauge of how much relayable traffic the rest of the network is carrying.
+        <b>≥100</b> is bulk, solicited or not.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><h3>Packing — addresses per message</h3>
+        <button class="btn" data-tbl="t-pack" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-pack"></div>
+      <div class="plot" id="c-pack"></div>
+      <div class="tbl" id="t-pack"></div>
+    </div>
+
+    <h2 class="sec">Rate limiting</h2>
+    <div class="card">
+      <div class="chead"><h3>Intensity — addresses dropped per 10,000 received</h3>
+        <button class="btn" data-tbl="t-rl" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-rl"></div>
+      <div class="plot" id="c-rl"></div>
+      <div class="tbl" id="t-rl"></div>
+      <p class="note" style="margin-bottom:2px">
+        The bucket refills at <code>MAX_ADDR_RATE_PER_SECOND</code> = 0.1/s — a budget of
+        <b>8,640 addresses per peer per day</b> — capped at 1,000, and starts at 1.0.
+        Sending a GETADDR grants the peer +1,000, so a reply is never limited but an
+        unsolicited dump to a fresh connection is almost entirely dropped. This is a
+        node-side measurement: it records what you decided to drop, so unlike anything
+        derived from address timestamps it cannot be shaped by what peers claim.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="chead"><h3>Concentration — worst peer's share of the drops</h3>
+        <button class="btn" data-tbl="t-conc" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-conc"></div>
+      <div class="plot" id="c-conc"></div>
+      <div class="tbl" id="t-conc"></div>
+      <p class="note" style="margin-bottom:2px">
+        High share means one peer is over the bucket on its own. A collapse to a few
+        percent means no single peer exceeds the budget any more — the drops are the
+        ordinary background of many peers each just grazing it.
+      </p>
+    </div>
+
+    <h2 class="sec">Unsolicited bulk</h2>
+    <div class="card">
+      <div class="chead"><h3>Bulk pushes we never asked for</h3>
+        <button class="btn" data-tbl="t-uns" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-uns"></div>
+      <div class="plot" id="c-uns"></div>
+      <div class="tbl" id="t-uns"></div>
+      <p class="note" style="margin-bottom:2px">
+        A message of ≥100 addresses from a peer we sent no GETADDR to. Because the token
+        bucket starts at 1.0 and only refills at 0.1/s, such a push lands on a nearly
+        empty bucket and is ~99% dropped — so it contributes almost nothing to address
+        volume and almost everything to the rate-limit counter. It is invisible in the
+        volume charts above and loud here.
+      </p>
+    </div>
+
+    <h2 class="sec">Peers</h2>
+    <div class="card">
+      <div class="chead"><h3>Distinct peers sending addresses</h3>
+        <button class="btn" data-tbl="t-peer" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-peer"></div>
+      <div class="plot" id="c-peer"></div>
+      <div class="tbl" id="t-peer"></div>
+      <p class="note warn" style="margin-bottom:2px">
+        Peer ids are per-connection and restart at 0 when the node does, so a bucket
+        spanning a restart double-counts, and per-peer totals across one are meaningless.
+        Resolve ids to addresses via the <code>receive version message</code> lines before
+        reasoning about <em>who</em> anything was.
+      </p>
+    </div>
+  </div>
+</div>
+<div id="tip"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const fmt = n => n.toLocaleString();
+const f1 = n => n.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1});
+const f2 = n => n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const TKEY='p2p-dash-theme', root=document.documentElement;
+if(localStorage.getItem(TKEY)) root.setAttribute('data-theme',localStorage.getItem(TKEY));
+$('#themeBtn').addEventListener('click',()=>{
+  const cur=root.getAttribute('data-theme');
+  const dark = cur ? cur==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  const next = dark?'light':'dark';
+  root.setAttribute('data-theme',next); localStorage.setItem(TKEY,next);
+});
+
+const S = { msgs:[], sentSeen:0, name:'', gran:'day', range:0 };
+
+/* ---------- parse ---------- */
+const RE_TS   = /^(\d{4}-\d{2}-\d{2})T(\d{2}):\d{2}:\d{2}/;
+const RE_RECV = /Received addr: (\d+) addresses \((\d+) processed, (\d+) rate-limited\) from peer=(\d+)/;
+const RE_SENT = /sending getaddr \(0 bytes\) peer=(\d+)/;
+const WINDOW=120, MIN_REPLY=100;
+
+/* channel ids: 0 gossip <=10, 1 mid 11-99, 2 bulk >=100 */
+function parseLog(text){
+  /* Two phases. Phase 1 collects both line types; phase 2 walks them in
+   * chronological order.
+   *
+   * The walk must be chronological rather than "build a sent map up front":
+   * peer ids restart at 0 when the node does, so a global map matches a
+   * post-restart reply against the previous run's peer of the same id.
+   *
+   * Log timestamps are whole seconds, so a reply frequently shares a second
+   * with the GETADDR that provoked it. Sorting must therefore break ties with
+   * sent-before-recv, otherwise those replies look unsolicited. Sorting here
+   * instead of trusting file order also makes the result independent of how
+   * the two greps were concatenated.
+   */
+  const ev=[];
+  let sentSeen=0, lines=0, bad=0, i=0;
+  let pos=0;
+  while(pos<text.length){
+    let nl=text.indexOf('\n',pos); if(nl<0) nl=text.length;
+    const line=text.slice(pos,nl); pos=nl+1;
+    if(!line) continue;
+    const isRecv=line.indexOf('Received addr:')>=0;
+    const isSent=!isRecv && line.indexOf('sending getaddr')>=0;
+    if(!isRecv && !isSent) continue;
+    lines++;
+    const t=RE_TS.exec(line);
+    if(!t){ bad++; continue; }
+    const epoch=Date.parse(line.slice(0,19)+'Z')/1000;
+    if(!Number.isFinite(epoch)){ bad++; continue; }
+    if(isSent){
+      const m=RE_SENT.exec(line);
+      if(!m){ bad++; continue; }
+      ev.push({e:epoch,k:0,i:i++,peer:m[1]}); sentSeen++;
+    }else{
+      const m=RE_RECV.exec(line);
+      if(!m){ bad++; continue; }
+      ev.push({e:epoch,k:1,i:i++,peer:m[4],n:+m[1],proc:+m[2],rl:+m[3],
+               day:t[1],hour:t[1]+'T'+t[2]});
+    }
+  }
+  ev.sort((a,b)=> a.e-b.e || a.k-b.k || a.i-b.i);
+
+  const out=[], sentAt=new Map();
+  let unmatchedBig=0;
+  for(const x of ev){
+    if(x.k===0){ sentAt.set(x.peer, x.e); continue; }
+    const t0=sentAt.get(x.peer);
+    const solicited = t0!==undefined && x.n>=MIN_REPLY && x.e-t0>=0 && x.e-t0<=WINDOW;
+    if(!solicited && x.n>=MIN_REPLY) unmatchedBig++;
+    out.push({e:x.e, day:x.day, hour:x.hour, n:x.n, proc:x.proc, rl:x.rl, peer:x.peer,
+              ch: x.n<=10?0 : x.n<100?1 : 2, sol:solicited});
+  }
+  if(!out.length)
+    throw new Error(lines? 'Found log lines but none matched the "Received addr:" format.'
+                         : 'No "Received addr:" lines in this file. Grep them out of debug.log first — the node needs debug=net.');
+  return {msgs:out, sentSeen, unmatchedBig, bad};
+}
+
+/* ---------- aggregate ---------- */
+function aggregate(){
+  const key = S.gran==='day' ? (m=>m.day) : (m=>m.hour);
+  let msgs=S.msgs;
+  if(S.range){
+    const last=msgs[msgs.length-1].e, cut=last-S.range*86400;
+    msgs=msgs.filter(m=>m.e>=cut);
+  }
+  const map=new Map();
+  for(const m of msgs){
+    const k=key(m);
+    let b=map.get(k);
+    if(!b){ b={k, msgs:0, addrs:0, proc:0, rl:0, chA:[0,0,0], chM:[0,0,0],
+               peers:new Set(), rlBy:new Map(), uns:0, unsA:0, unsRl:0, ga:0, gaA:0};
+            map.set(k,b); }
+    b.msgs++; b.addrs+=m.n; b.proc+=m.proc; b.rl+=m.rl;
+    b.chA[m.ch]+=m.n; b.chM[m.ch]++;
+    b.peers.add(m.peer);
+    if(m.rl) b.rlBy.set(m.peer,(b.rlBy.get(m.peer)||0)+m.rl);
+    if(m.ch===2){ if(m.sol){ b.ga++; b.gaA+=m.n; } else { b.uns++; b.unsA+=m.n; b.unsRl+=m.rl; } }
+  }
+  const keys=[...map.keys()].sort();
+  return keys.map(k=>{
+    const b=map.get(k);
+    let top=0; for(const v of b.rlBy.values()) if(v>top) top=v;
+    b.top1 = b.rl ? 100*top/b.rl : 0;
+    b.rlPeers = b.rlBy.size;
+    b.pack = b.msgs ? b.addrs/b.msgs : 0;
+    b.intensity = b.addrs ? 10000*b.rl/b.addrs : 0;
+    b.label = S.gran==='day' ? k.slice(5) : k.slice(8).replace('T',' ')+'h';
+    return b;
+  });
+}
+
+/* ---------- chart helpers ---------- */
+const tip=$('#tip');
+function showTip(e,title,lines){
+  tip.innerHTML=`<div class="tt">${esc(title)}</div>`+lines.map(l=>`<div class="tr">${esc(l)}</div>`).join('');
+  tip.style.display='block';
+  const r=tip.getBoundingClientRect();
+  let x=e.clientX+14,y=e.clientY+14;
+  if(x+r.width>innerWidth-8) x=e.clientX-r.width-14;
+  if(y+r.height>innerHeight-8) y=e.clientY-r.height-14;
+  tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px';
+}
+const hideTip=()=>{tip.style.display='none';};
+addEventListener('scroll',hideTip,true);
+
+function niceTicks(max,count){
+  if(max<=0) return [0,1];
+  const raw=max/count, mag=Math.pow(10,Math.floor(Math.log10(raw))), norm=raw/mag;
+  const step=(norm<=1?1:norm<=2?2:norm<=2.5?2.5:norm<=5?5:10)*mag;
+  const out=[]; for(let v=0; v<=max+step*0.001; v+=step) out.push(v);
+  if(out[out.length-1]<max) out.push(out[out.length-1]+step);
+  return out;
+}
+function topRoundPath(x,y,w,h,r){
+  r=Math.max(0,Math.min(r,w/2,h));
+  if(r<0.5) return `M${x} ${y+h}L${x} ${y}L${x+w} ${y}L${x+w} ${y+h}Z`;
+  return `M${x} ${y+h}L${x} ${y+r}Q${x} ${y} ${x+r} ${y}L${x+w-r} ${y}Q${x+w} ${y} ${x+w} ${y+r}L${x+w} ${y+h}Z`;
+}
+function frame(W,ph,ML,MR,MT,ticks,top,fmtTick){
+  let g='';
+  const y=v=>MT+ph-(v/top)*ph;
+  for(const t of ticks)
+    g+=`<line x1="${ML}" x2="${W-MR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/>`
+     + `<text x="${ML-9}" y="${(y(t)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" style="font-variant-numeric:tabular-nums">${fmtTick(t)}</text>`;
+  g+=`<line x1="${ML}" x2="${W-MR}" y1="${MT+ph}" y2="${MT+ph}" stroke="var(--axis)" stroke-width="1"/>`;
+  return g;
+}
+function xLabels(series,ML,band,ph,MT,n){
+  const lc=Math.min(n||7,series.length); let xl='';
+  for(let k=0;k<lc;k++){
+    const i=lc===1?0:Math.round(k*(series.length-1)/(lc-1));
+    xl+=`<text x="${(ML+i*band+band/2).toFixed(1)}" y="${MT+ph+19}" text-anchor="middle" font-size="11" fill="var(--muted)">${series[i].label}</text>`;
+  }
+  return xl;
+}
+function hitLayer(series,ML,band,MT,ph){
+  let h='';
+  series.forEach((d,i)=>{ h+=`<rect x="${(ML+i*band).toFixed(2)}" y="${MT}" width="${Math.max(band,3).toFixed(2)}" height="${ph}" fill="transparent" data-i="${i}"/>`; });
+  return h;
+}
+function wire(mount,series,build){
+  mount.querySelectorAll('rect[data-i]').forEach(r=>{
+    r.addEventListener('mousemove',e=>{const d=series[+r.dataset.i]; showTip(e,d.k,build(d));});
+    r.addEventListener('mouseleave',hideTip);
+  });
+}
+
+/* stacked columns, 3 categorical series */
+const CH=[{k:'gossip ≤10',v:'--series-1'},{k:'mid 11–99',v:'--series-2'},{k:'bulk ≥100',v:'--series-3'}];
+function stackChart(mount,series,pick,opts){
+  const W=Math.max(mount.clientWidth||760,320), ML=62,MR=12,MT=10,MB=30,ph=opts.height||220;
+  if(!series.length){ mount.innerHTML='<p style="color:var(--muted);font-size:13px">No data in range.</p>'; return; }
+  const totals=series.map(d=>pick(d).reduce((a,b)=>a+b,0));
+  const ticks=niceTicks(Math.max(...totals),4), top=ticks[ticks.length-1]||1;
+  const pw=W-ML-MR, band=pw/series.length, bw=Math.min(24,Math.max(1,band-2));
+  let bars='';
+  series.forEach((d,i)=>{
+    const vals=pick(d); const bx=ML+i*band+(band-bw)/2;
+    let acc=0;
+    vals.forEach((v,si)=>{
+      if(v<=0) return;
+      const h=(v/top)*ph, y0=MT+ph-((acc+v)/top)*ph;
+      const hh=Math.max(0.8,h-(acc>0?2:0));           /* 2px surface gap between segments */
+      bars+=`<rect x="${bx.toFixed(2)}" y="${y0.toFixed(2)}" width="${bw.toFixed(2)}" height="${hh.toFixed(2)}" rx="${si===vals.length-1?2:0}" fill="var(${CH[si].v})"/>`;
+      acc+=v;
+    });
+  });
+  mount.innerHTML=`<svg width="${W}" height="${ph+MT+MB}" role="img" aria-label="${esc(opts.aria||'')}">`
+    + frame(W,ph,ML,MR,MT,ticks,top,t=>fmt(Math.round(t))) + bars
+    + xLabels(series,ML,band,ph,MT) + `<g>${hitLayer(series,ML,band,MT,ph)}</g></svg>`;
+  wire(mount,series,d=>{
+    const v=pick(d), tot=v.reduce((a,b)=>a+b,0);
+    return CH.map((c,i)=>`${c.k}: ${fmt(v[i])}${tot?' ('+(100*v[i]/tot).toFixed(1)+'%)':''}`)
+             .concat([`total ${fmt(tot)}`]);
+  });
+}
+
+/* single-series columns */
+function colChart(mount,series,val,opts){
+  const W=Math.max(mount.clientWidth||760,320), ML=62,MR=12,MT=10,MB=30,ph=opts.height||190;
+  if(!series.length){ mount.innerHTML='<p style="color:var(--muted);font-size:13px">No data in range.</p>'; return; }
+  const vals=series.map(val);
+  const ticks=niceTicks(Math.max(...vals,opts.min||0),4), top=ticks[ticks.length-1]||1;
+  const pw=W-ML-MR, band=pw/series.length, bw=Math.min(24,Math.max(1,band-2));
+  let bars='';
+  series.forEach((d,i)=>{
+    const v=vals[i]; if(v<=0) return;
+    const h=Math.max(1.5,(v/top)*ph), bx=ML+i*band+(band-bw)/2;
+    const col = opts.hot && opts.hot(d) ? '--critical' : (opts.color||'--series-1');
+    bars+=`<path d="${topRoundPath(bx,MT+ph-h,bw,h,4)}" fill="var(${col})"/>`;
+  });
+  mount.innerHTML=`<svg width="${W}" height="${ph+MT+MB}" role="img" aria-label="${esc(opts.aria||'')}">`
+    + frame(W,ph,ML,MR,MT,ticks,top,opts.fmtTick||(t=>fmt(Math.round(t)))) + bars
+    + xLabels(series,ML,band,ph,MT) + `<g>${hitLayer(series,ML,band,MT,ph)}</g></svg>`;
+  wire(mount,series,opts.tip);
+}
+
+/* single-series line with crosshair */
+function lineChart(mount,series,val,opts){
+  const W=Math.max(mount.clientWidth||760,320), ML=62,MR=12,MT=10,MB=30,ph=opts.height||190;
+  if(!series.length){ mount.innerHTML='<p style="color:var(--muted);font-size:13px">No data in range.</p>'; return; }
+  const vals=series.map(val);
+  const ticks=niceTicks(Math.max(...vals),4), top=ticks[ticks.length-1]||1;
+  const pw=W-ML-MR, band=pw/series.length;
+  const X=i=>ML+i*band+band/2, Y=v=>MT+ph-(v/top)*ph;
+  let d='';
+  series.forEach((s,i)=>{ d+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(vals[i]).toFixed(1); });
+  const last=series.length-1;
+  mount.innerHTML=`<svg width="${W}" height="${ph+MT+MB}" role="img" aria-label="${esc(opts.aria||'')}">`
+    + frame(W,ph,ML,MR,MT,ticks,top,opts.fmtTick||(t=>f1(t)))
+    + `<path d="${d}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`
+    + `<circle cx="${X(last).toFixed(1)}" cy="${Y(vals[last]).toFixed(1)}" r="4" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"/>`
+    + `<text x="${(X(last)-8).toFixed(1)}" y="${(Y(vals[last])-10).toFixed(1)}" text-anchor="end" font-size="11.5" fill="var(--text-primary)" style="font-variant-numeric:tabular-nums">${(opts.fmtVal||f2)(vals[last])}</text>`
+    + xLabels(series,ML,band,ph,MT) + `<g>${hitLayer(series,ML,band,MT,ph)}</g></svg>`;
+  wire(mount,series,opts.tip);
+}
+
+function tile(k,v,n,sv){
+  return `<div class="tile"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`
+       + `<div class="n">${sv?`<span class="sdot" style="background:var(${sv})"></span>`:''}${esc(n)}</div></div>`;
+}
+function tbl(head,rows){
+  return `<table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`
+    + rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('') + `</tbody></table>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const S2=aggregate();
+  if(!S2.length){ return; }
+  const sum=(f)=>S2.reduce((a,b)=>a+f(b),0);
+  const tMsgs=sum(b=>b.msgs), tAddrs=sum(b=>b.addrs), tRl=sum(b=>b.rl), tUns=sum(b=>b.uns);
+  const allPeers=new Set(); for(const b of S2) for(const p of b.peers) allPeers.add(p);
+  const span=`${S2[0].k} → ${S2[S2.length-1].k}, ${S2.length} ${S.gran==='day'?'days':'hours'}`;
+
+  $('#kpis').innerHTML=[
+    tile('Messages', fmt(tMsgs), span),
+    tile('Addresses', fmt(tAddrs), `${f2(tAddrs/Math.max(tMsgs,1))} per message`),
+    tile('Rate-limited', fmt(tRl), `${f1(10000*tRl/Math.max(tAddrs,1))} per 10k received`),
+    tile('Unsolicited bulk', fmt(tUns), tUns? `${fmt(sum(b=>b.unsA))} addresses, ${fmt(sum(b=>b.unsRl))} dropped` : 'none in this window',
+         tUns? '--critical':'--good'),
+    tile('Peer ids seen', fmt(allPeers.size), 'per-connection, not unique hosts'),
+    tile('GETADDR replies', fmt(sum(b=>b.ga)), `${fmt(sum(b=>b.gaA))} addresses`),
+  ].join('');
+
+  /* addresses received — the headline total, unstacked so the trend is readable */
+  const addrSeries=S2.map(b=>b.addrs);
+  const peakI=addrSeries.indexOf(Math.max(...addrSeries)), peak=S2[peakI];
+  const unit=S.gran==='day'?'day':'hour';
+  $('#cs-addr').textContent=`${fmt(tAddrs)} total · mean ${fmt(Math.round(tAddrs/S2.length))} per ${unit}`
+    + ` · peak ${fmt(peak.addrs)} on ${peak.k}`;
+  lineChart($('#c-addr'),S2,d=>d.addrs,{aria:'addresses received per bucket',
+    fmtVal:v=>fmt(v), fmtTick:t=>fmt(Math.round(t)),
+    tip:d=>[`${fmt(d.addrs)} addresses`,`${fmt(d.msgs)} messages`,`${f2(d.pack)} per message`,
+            `${fmt(d.rl)} dropped by the rate limiter`]});
+  $('#t-addr').innerHTML=tbl(['Bucket','Addresses','Messages','Addrs/msg','Dropped'],
+    S2.slice().reverse().map(b=>[b.k,fmt(b.addrs),fmt(b.msgs),f2(b.pack),fmt(b.rl)]));
+
+  /* volume */
+  /* The bulk band is a size cut, not a solicitation cut — normally it is all
+     getaddr replies, so say what it actually contains rather than leave it implied. */
+  const nGa=sum(b=>b.ga), nUn=sum(b=>b.uns);
+  $('#cs-vol').textContent=`${fmt(tAddrs)} addresses in ${fmt(tMsgs)} messages · ${span}`
+    + ` · bulk ≥100 is ${fmt(nGa)} getaddr ${nGa===1?'reply':'replies'} and `
+    + (nUn? `${fmt(nUn)} unsolicited ${nUn===1?'push':'pushes'} — see below` : 'nothing unsolicited');
+  stackChart($('#c-vol'),S2,d=>d.chA,{aria:'addresses per bucket by channel'});
+  $('#l-vol').innerHTML=CH.map(c=>`<span class="lg"><i style="background:var(${c.v})"></i>${c.k}</span>`).join('');
+  $('#t-vol').innerHTML=tbl(['Bucket','gossip ≤10','mid 11–99','bulk ≥100','Total addrs','Msgs'],
+    S2.slice().reverse().map(b=>[b.k,fmt(b.chA[0]),fmt(b.chA[1]),fmt(b.chA[2]),fmt(b.addrs),fmt(b.msgs)]));
+
+  /* packing */
+  const packs=S2.map(b=>b.pack);
+  $('#cs-pack').textContent=`mean ${f2(tAddrs/Math.max(tMsgs,1))} · min ${f2(Math.min(...packs))} · max ${f2(Math.max(...packs))}`;
+  lineChart($('#c-pack'),S2,d=>d.pack,{aria:'addresses per message',
+    tip:d=>[`${f2(d.pack)} addresses per message`,`${fmt(d.addrs)} addresses in ${fmt(d.msgs)} messages`,
+            `gossip ≤10 packing ${f2(d.chM[0]?d.chA[0]/d.chM[0]:0)}`]});
+  $('#t-pack').innerHTML=tbl(['Bucket','Addrs/msg','Addresses','Messages'],
+    S2.slice().reverse().map(b=>[b.k,f2(b.pack),fmt(b.addrs),fmt(b.msgs)]));
+
+  /* rate limiting */
+  $('#cs-rl').textContent=`${fmt(tRl)} addresses dropped · ${f1(10000*tRl/Math.max(tAddrs,1))} per 10k overall`;
+  colChart($('#c-rl'),S2,d=>d.intensity,{aria:'rate-limit intensity',fmtTick:t=>f1(t),
+    tip:d=>[`${f1(d.intensity)} dropped per 10k received`,`${fmt(d.rl)} dropped of ${fmt(d.addrs)}`,
+            `${d.rlPeers} of ${d.peers.size} peers affected`]});
+  $('#t-rl').innerHTML=tbl(['Bucket','per 10k','Dropped','Received','Peers hit'],
+    S2.slice().reverse().map(b=>[b.k,f1(b.intensity),fmt(b.rl),fmt(b.addrs),fmt(b.rlPeers)]));
+
+  /* concentration */
+  const conc=S2.filter(b=>b.rl>0);
+  $('#cs-conc').textContent = conc.length
+    ? `worst bucket ${f1(Math.max(...conc.map(b=>b.top1)))}% · median ${f1(conc.map(b=>b.top1).sort((a,b)=>a-b)[Math.floor(conc.length/2)])}%`
+    : 'no rate limiting in this window';
+  colChart($('#c-conc'),S2,d=>d.top1,{aria:'top peer share of drops',fmtTick:t=>f1(t)+'%',
+    hot:d=>d.top1>=25,
+    tip:d=>d.rl?[`worst peer holds ${f1(d.top1)}% of the drops`,`${fmt(d.rl)} dropped across ${d.rlPeers} peers`]
+               :['no drops in this bucket']});
+  $('#t-conc').innerHTML=tbl(['Bucket','Top-1 share','Dropped','Peers hit'],
+    S2.slice().reverse().map(b=>[b.k,b.rl?f1(b.top1)+'%':'—',fmt(b.rl),fmt(b.rlPeers)]));
+
+  /* unsolicited bulk */
+  $('#cs-uns').textContent = tUns
+    ? `${fmt(tUns)} unsolicited bulk messages carrying ${fmt(sum(b=>b.unsA))} addresses, ${fmt(sum(b=>b.unsRl))} of them dropped`
+    : 'none in this window — every ≥100-address message was a reply to a GETADDR we sent';
+  colChart($('#c-uns'),S2,d=>d.uns,{aria:'unsolicited bulk pushes',color:'--critical',min:1,
+    tip:d=>[`${fmt(d.uns)} unsolicited bulk messages`,`${fmt(d.unsA)} addresses, ${fmt(d.unsRl)} dropped`]});
+  const unsList=S.msgs.filter(m=>m.ch===2 && !m.sol).slice(0,300);
+  $('#t-uns').innerHTML = unsList.length
+    ? tbl(['Time','Peer','Addresses','Processed','Dropped'],
+        unsList.map(m=>[new Date(m.e*1000).toISOString().replace('T',' ').slice(0,19),
+                        'peer='+m.peer,fmt(m.n),fmt(m.proc),fmt(m.rl)]))
+    : '<p style="color:var(--muted);font-size:13px;margin:8px 0">Nothing to list.</p>';
+
+  /* peers */
+  $('#cs-peer').textContent=`${fmt(allPeers.size)} distinct peer ids across the window`;
+  lineChart($('#c-peer'),S2,d=>d.peers.size,{aria:'distinct peers per bucket',fmtVal:v=>fmt(v),
+    fmtTick:t=>fmt(Math.round(t)),
+    tip:d=>[`${fmt(d.peers.size)} peers sent addresses`,`${fmt(d.rlPeers)} of them were rate-limited`]});
+  $('#t-peer').innerHTML=tbl(['Bucket','Peers','Rate-limited','Messages'],
+    S2.slice().reverse().map(b=>[b.k,fmt(b.peers.size),fmt(b.rlPeers),fmt(b.msgs)]));
+}
+
+/* ---------- wiring ---------- */
+$('#gran').addEventListener('change',e=>{S.gran=e.target.value; render();});
+$('#rangesel').addEventListener('change',e=>{S.range=Number(e.target.value); render();});
+$('#reset').addEventListener('click',()=>{
+  $('#main').style.display='none'; $('#drop').style.display='block';
+  $('#err').style.display='none'; $('#file').value='';
+});
+document.querySelectorAll('button[data-tbl]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const el=$('#'+b.dataset.tbl), on=el.style.display!=='block';
+    el.style.display=on?'block':'none'; b.setAttribute('aria-pressed',String(on));
+  });
+});
+function fail(m){const e=$('#err'); e.textContent=m; e.style.display='block'; $('#busy').style.display='none';}
+async function readText(file){
+  const buf=await file.arrayBuffer();
+  if(/\.zst$/i.test(file.name)) throw new Error('The browser cannot read .zst. Decompress first:  zstd -d '+file.name);
+  if(/\.gz$/i.test(file.name)){
+    if(typeof DecompressionStream==='undefined') throw new Error('This browser cannot read .gz. Run gunzip first.');
+    return await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  }
+  return new TextDecoder().decode(buf);
+}
+async function handle(file){
+  $('#err').style.display='none'; $('#busy').style.display='block';
+  await new Promise(r=>setTimeout(r,20));
+  try{
+    const res=parseLog(await readText(file));
+    S.msgs=res.msgs; S.sentSeen=res.sentSeen; S.name=file.name;
+    $('#fname').textContent=file.name;
+    $('#srcpill').textContent=`${fmt(res.msgs.length)} addr messages`;
+    const fb=$('#fallback');
+    if(!res.sentSeen){
+      fb.style.display='block';
+      fb.innerHTML='No <code>sending getaddr</code> lines in this file, so solicited replies '
+        + 'cannot be told from unsolicited pushes — <b>every ≥100-address message is counted as '
+        + 'unsolicited</b>. Re-grep with <code>\'Received addr:|sending getaddr\'</code> to fix that.';
+    } else fb.style.display='none';
+    $('#busy').style.display='none';
+    $('#drop').style.display='none'; $('#main').style.display='block';
+    render();
+  }catch(ex){ fail(ex && ex.message ? ex.message : String(ex)); }
+}
+$('#file').addEventListener('change',e=>{ if(e.target.files[0]) handle(e.target.files[0]); });
+const dz=$('#drop');
+['dragenter','dragover'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add('over');}));
+['dragleave','drop'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove('over');}));
+dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0]; if(f) handle(f);});
+let rt; addEventListener('resize',()=>{clearTimeout(rt); rt=setTimeout(()=>{if(S.msgs.length) render();},160);});
+</script>
+</body>
+</html>

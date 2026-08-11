@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bitcoin P2P — analysis dashboards</title>
+<style>
+  :root{
+    color-scheme: light;
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --good:#0ca30c;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --good:#0ca30c;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --good:#0ca30c;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--page); color:var(--text-primary);
+    font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:48px 24px 80px;
+  }
+  .wrap{max-width:840px;margin:0 auto}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:8px}
+  h1{font-size:26px;line-height:1.2;margin:0 0 6px;letter-spacing:-0.01em}
+  .sub{color:var(--text-secondary);margin:0 0 40px;max-width:62ch}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);
+     margin:40px 0 14px;font-weight:600}
+  a.card{
+    display:block;text-decoration:none;color:inherit;background:var(--surface-1);
+    border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:10px;
+    transition:border-color .12s ease, transform .12s ease;
+  }
+  a.card:hover{border-color:var(--series-1);transform:translateY(-1px)}
+  a.card:focus-visible{outline:2px solid var(--series-1);outline-offset:2px}
+  .card .t{font-weight:600;font-size:16px;display:flex;align-items:center;gap:9px}
+  .card .d{color:var(--text-secondary);font-size:14px;margin-top:4px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--good);flex:none}
+  .planned{border-style:dashed;opacity:.72}
+  .planned .dot{background:var(--muted)}
+  ul.plain{margin:0;padding-left:18px;color:var(--text-secondary)}
+  ul.plain li{margin:3px 0}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+       background:var(--surface-1);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+  button.theme{
+    background:var(--surface-1);color:var(--text-secondary);border:1px solid var(--border);
+    border-radius:7px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer;flex:none;
+  }
+  button.theme:hover{color:var(--text-primary);border-color:var(--muted)}
+  footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--grid);
+         color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Bitcoin P2P — analysis dashboards</h1>
+    </div>
+    <button class="theme" id="themeBtn" type="button">Theme</button>
+  </header>
+  <p class="sub">
+    Local, browser-only tools for inspecting node state. Nothing is uploaded — every
+    file you open is parsed in this page and never leaves the machine.
+  </p>
+
+  <h2>Available</h2>
+
+  <a class="card" href="addrman-health.html">
+    <div class="t"><span class="dot"></span>Addrman health</div>
+    <div class="d">
+      Feed a <code>getrawaddrman</code> dump and see the timestamp distribution across
+      the new and tried tables — last-refresh histogram, age bands, and the
+      terrible-by-horizon share.
+    </div>
+  </a>
+
+  <a class="card" href="relay-health.html">
+    <div class="t"><span class="dot"></span>Relay health</div>
+    <div class="d">
+      Feed grepped <code>Received addr:</code> lines and see volume and packing over time,
+      the gossip / mid / bulk channel split, rate-limit intensity and concentration, and
+      any unsolicited bulk pushes.
+    </div>
+  </a>
+
+  <h2>Planned</h2>
+
+  <div class="card planned">
+    <div class="t"><span class="dot"></span>Churn — flushed out vs entering</div>
+    <div class="d">Needs two dumps taken apart in time; diffs eviction against insertion.</div>
+  </div>
+
+  <div class="card planned">
+    <div class="t"><span class="dot"></span>ASN vs netgroup bucketing</div>
+    <div class="d">Requires an asmap file — ASN is not present in a <code>getrawaddrman</code> dump.</div>
+  </div>
+
+  <div class="card planned">
+    <div class="t"><span class="dot"></span>Network mix, nRefCount, nAttempts</div>
+    <div class="d">
+      Network mix and nRefCount come from a <code>getrawaddrman</code> dump; nAttempts and
+      m_last_success are absent there but <em>are</em> serialized in <code>peers.dat</code>,
+      which also carries nKey — enough to evaluate the full <code>IsTerrible()</code>
+      and to recompute bucketing under an asmap.
+    </div>
+  </div>
+
+  <div class="card planned">
+    <div class="t"><span class="dot"></span>Sustained-spam simulator</div>
+    <div class="d">Models what a continuous injection rate does to occupancy and eviction.</div>
+  </div>
+
+  <h2>Getting a dump</h2>
+  <ul class="plain">
+    <li><code>bitcoin-cli getrawaddrman &gt; addrman.json</code></li>
+    <li>Hourly cron snapshots are <code>.json.zst</code> — run <code>zstd -d</code> first; the browser can read plain <code>.json</code> and <code>.json.gz</code>.</li>
+  </ul>
+
+  <footer>Static pages. Open directly with <code>file://</code> — no server needed.</footer>
+</div>
+<script>
+  const KEY='p2p-dash-theme';
+  const root=document.documentElement;
+  const saved=localStorage.getItem(KEY);
+  if(saved) root.setAttribute('data-theme',saved);
+  document.getElementById('themeBtn').addEventListener('click',()=>{
+    const cur=root.getAttribute('data-theme');
+    const isDark = cur ? cur==='dark'
+      : matchMedia('(prefers-color-scheme: dark)').matches;
+    const next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme',next);
+    localStorage.setItem(KEY,next);
+  });
+</script>
+</body>
+</html>
