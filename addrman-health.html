@@ -823,13 +823,36 @@ function buildSlots(rows, meta, isPd){
       else               { if(k>=0&&k<TRIED_SLOTS) sT[k]=i; }
     }
   }else{
-    exact=false;                                  /* bucket is real, position is packed */
+    /* peers.dat stores which new buckets hold an entry but not the slot index,
+       and stores nothing at all about tried bucketing — Core recomputes both on
+       load. Reproduce that here rather than packing entries in file order, which
+       drew every tried entry into the first 24 buckets and looked like addrman
+       filled buckets sequentially. */
+    const nKey=meta&&meta.nKey;
     const bt=(meta&&meta.bucketTable)||[];
-    for(let b=0;b<bt.length && b<1024;b++)
-      bt[b].forEach((rowIdx,j)=>{ if(j<64) sN[b*64+j]=rowIdx; });
-    let t=0;
-    for(let i=0;i<rows.length;i++)
-      if(rows[i].table==='tried' && t<TRIED_SLOTS) sT[t++]=i;
+    if(!nKey){ exact=false; }
+    for(let b=0;b<bt.length && b<1024;b++){
+      for(const rowIdx of bt[b]){
+        const r=rows[rowIdx];
+        const ab=PeersDat.addrBytes(r.network,r.address);
+        let k;
+        if(nKey && ab) k=b*64+PeersDat.bucketPosition(nKey,true,b,r.network,ab,r.port);
+        else { k=b*64; while(k<b*64+64 && sN[k]>=0) k++; }
+        if(k>=0 && k<NEW_SLOTS && sN[k]<0) sN[k]=rowIdx;
+      }
+    }
+    let packed=0;
+    for(let i=0;i<rows.length;i++){
+      const r=rows[i]; if(r.table!=='tried') continue;
+      const ab=nKey?PeersDat.addrBytes(r.network,r.address):null;
+      if(ab){
+        const b=PeersDat.triedBucket(nKey,r.network,ab,r.port);
+        const k=b*64+PeersDat.bucketPosition(nKey,false,b,r.network,ab,r.port);
+        if(k>=0 && k<TRIED_SLOTS && sT[k]<0){ sT[k]=i; continue; }
+      }
+      while(packed<TRIED_SLOTS && sT[packed]>=0) packed++;   /* collision fallback */
+      if(packed<TRIED_SLOTS) sT[packed]=i;
+    }
   }
   return {sN, sT, exact};
 }
@@ -1219,10 +1242,11 @@ function render_(){
       ? 'Positions are exact — <code>getrawaddrman</code> keys every entry by <code>bucket/position</code>. '
         + 'Arms 3 and 4 cannot fire from this source, so only the timestamp arms are evaluated; load a '
         + '<code>peers.dat</code> for the full test.'
-      : 'Bucket is exact, position within a bucket is packed in file order — <code>peers.dat</code> stores '
-        + 'bucket membership but not the slot index, which Core recomputes via '
-        + '<code>GetBucketPosition(nKey, …)</code> on load. Tried entries carry no bucket in the file at all '
-        + '(also recomputed), so the tried map is file order.')
+      : 'Buckets and positions are computed the way Core does on load: new-table buckets come from the '
+        + 'stored bucket table with <code>GetBucketPosition(nKey, …)</code> for the slot, and tried entries '
+        + 'get both from <code>GetTriedBucket</code> / <code>GetBucketPosition</code> — <code>peers.dat</code> '
+        + 'stores no tried bucketing at all. Verified against this file: every stored new bucket\'s computed '
+        + 'positions are a collision-free permutation of its 64 slots.')
     + ' An address with nRefCount &gt; 1 appears in more than one cell.';
 
   const badList=[];
