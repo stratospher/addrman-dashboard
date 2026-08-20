@@ -184,6 +184,7 @@
       <button class="btn" id="reset" type="button">Load another</button>
     </div>
 
+    <div id="rendererr" style="display:none;border-left:3px solid var(--critical);background:var(--surface-1);padding:11px 14px;border-radius:0 7px 7px 0;font-size:14px;color:var(--text-secondary);margin-bottom:18px"></div>
     <div class="kpis" id="kpis"></div>
 
     <h2 class="sec">Last refresh over time</h2>
@@ -253,6 +254,25 @@
     </div>
 
     <h2 class="sec" id="s-att">Connection attempts</h2>
+    <div class="card" id="card-conn">
+      <div class="chead"><h3>Connection history</h3>
+        <button class="btn" data-tbl="t-conn" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-conn"></div>
+      <div class="plot" id="c-conn"></div>
+      <div class="tbl" id="t-conn"></div>
+      <p class="note" style="margin-bottom:2px">
+        <b>Attempted</b> is every entry with evidence of a dial: a recorded success, a
+        recorded failure, or both. Successful and unsuccessful partition it, and adding the
+        no-recorded-attempt remainder accounts for every entry in the table.
+        That remainder is not quite "never dialled": <code>Attempt_</code> only
+        increments <code>nAttempts</code> when <code>m_last_count_attempt &lt; m_last_good</code>,
+        so at most one failure is counted per period of general connectivity — an address can
+        have been dialled without the counter moving. And <code>Good_</code> resets
+        <code>nAttempts</code> to 0 on success, so it means failures <em>since</em> the last
+        success, never a lifetime total.
+      </p>
+    </div>
+
     <div class="card" id="card-att">
       <div class="chead"><h3>Share of each table by nAttempts</h3>
         <button class="btn" data-tbl="t-att" type="button" aria-pressed="false">Table</button></div>
@@ -489,6 +509,7 @@ function activate(res, name){
     ? `peers.dat · format ${res.meta.format}${res.meta.network?' · '+res.meta.network:''}`
     : 'getrawaddrman';
   $('#card-att').classList.toggle('off', !isPd);
+  $('#card-conn').classList.toggle('off', !isPd);
   $('#card-terr').classList.toggle('off', !isPd);
   $('#s-att').style.display = isPd ? '' : 'none';
   const gsel=$('#gnet'), prev=gsel.value;
@@ -885,6 +906,18 @@ function hitSlot(px,py,nBuckets,cell){
 
 /* ---------- render ---------- */
 function render(){
+  const banner=$('#rendererr');
+  try{ render_(); if(banner) banner.style.display='none'; }
+  catch(ex){
+    console.error(ex);
+    if(banner){
+      banner.textContent='Render failed: '+(ex&&ex.message?ex.message:String(ex))
+        +' — sections below this point did not draw.';
+      banner.style.display='block';
+    }
+  }
+}
+function render_(){
   const ref=S.ref, rows=S.rows, isPd=S.source==='peersdat';
   const nNew=rows.filter(r=>r.table==='new'), nTried=rows.filter(r=>r.table==='tried');
 
@@ -904,7 +937,18 @@ function render(){
   const ages=rows.map(r=>(ref-r.time)/DAY).sort((a,b)=>a-b);
   const median=ages.length?ages[Math.floor(ages.length/2)]:0;
   const over30=rows.filter(r=>(ref-r.time)>30*DAY).length;
+  /* "distinct" is a unique address:port. On the peers.dat path that always equals
+     the row count — mapAddr is keyed by CService, so one record per address:port,
+     with slot multiplicity living in nRefCount rather than in duplicate records.
+     getrawaddrman emits one row per occupied bucket slot, so there they differ. */
   const distinct=new Set(rows.map(r=>r.address+':'+r.port)).size;
+  const hosts=new Set(rows.map(r=>r.address)).size;
+  /* Mutually exclusive connection states. m_last_success>0 means we completed a
+     connection at some point; nAttempts counts failures SINCE the last success
+     (Good_ resets it to 0), so the three cases partition the table exactly. */
+  const connOK   = isPd ? rows.filter(r=>r.last_success>0).length : 0;
+  const connFail = isPd ? rows.filter(r=>r.last_success===0 && r.nattempts>0).length : 0;
+  const connNone = isPd ? rows.filter(r=>r.last_success===0 && r.nattempts===0).length : 0;
   /* Keyed by address so the two sources agree: peers.dat stores one row per address
      carrying its refcount, getrawaddrman emits one row per occupied bucket slot. */
   const refMap=new Map();
@@ -914,20 +958,31 @@ function render(){
   for(const v of refMap.values()){ refSlots+=v; refHist[Math.min(v,MAXREF)]++; }
   const multiRef=[...refMap.values()].filter(v=>v>1).length;
   const share=terrible/Math.max(rows.length,1);
-  const st = share>0.10?['--critical','high'] : share>0.03?['--warning','elevated'] : ['--good','healthy'];
+  /* Bands calibrated against 117 recorded readings from the two experiment nodes
+     (terrible_rate_series{,_run2}.json): the clean control node ran 0.12–3.90%
+     across 58 readings, p90 3.67%. The earlier 3% cut put half of that node's
+     ordinary days in "elevated", which made the word meaningless. 4% clears
+     every control reading ever taken; 8% is well above the 5.34% high-water mark
+     of the deliberately poisoned test node. These are empirical, not from Core. */
+  const TERRIBLE_BANDS='Bands from this project\'s own history: healthy ≤4%, elevated 4–8%, high >8%. '
+    + 'The control node measured 0.12–3.90% over 58 readings. Not a Bitcoin Core threshold.';
+  const st = share>0.08?['--critical','high'] : share>0.04?['--warning','elevated'] : ['--good','healthy'];
 
   $('#kpis').innerHTML=[
-    tile('Entries', fmt(rows.length), `${fmt(distinct)} distinct addresses`),
+    tile('Entries', fmt(rows.length),
+         distinct===rows.length
+           ? `unique address:port · ${fmt(hosts)} distinct hosts`
+           : `${fmt(distinct)} unique address:port · ${fmt(hosts)} hosts`),
     tile('new / tried', `${fmt(nNew.length)} / ${fmt(nTried.length)}`,
          `${fmt(refSlots)} of 65,536 new slots filled (${(100*refSlots/65536).toFixed(1)}%)`),
     tile('Median age', median.toFixed(1)+' d', 'since last refresh'),
     isPd
-      ? tile('Terrible', `${(100*share).toFixed(2)}%`, `${fmt(terrible)} entries · ${st[1]} · full IsTerrible()`, st[0])
+      ? tile('Terrible', `${(100*share).toFixed(2)}%`, `${fmt(terrible)} entries · ${st[1]}`, st[0], TERRIBLE_BANDS)
       : tile('Older than 30d', `${(100*over30/Math.max(rows.length,1)).toFixed(2)}%`,
              `${fmt(over30)} entries · horizon arm only, a lower bound`, '--warning'),
     tile('nRefCount > 1', fmt(multiRef), `of ${fmt(refMap.size)} distinct new addresses`),
-    isPd ? tile('Never connected', fmt(rows.filter(r=>r.last_success===0).length),
-                `${fmt(rows.filter(r=>r.nattempts>0).length)} have been tried`)
+    isPd ? tile('Ever connected', fmt(connOK),
+                `${fmt(connOK+connFail)} of ${fmt(rows.length)} ever attempted`)
           : tile('Networks', String(new Set(rows.map(r=>r.network)).size),
                  [...new Set(rows.map(r=>r.network))].join(', ')),
   ].join('');
@@ -1002,6 +1057,35 @@ function render(){
 
   /* attempts + terrible (peers.dat only) */
   if(isPd){
+    $('#card-conn').classList.remove('off');
+    const attempted=connOK+connFail;
+    $('#cs-conn').textContent =
+      `Successful + unsuccessful = attempted (${fmt(connOK)} + ${fmt(connFail)} = ${fmt(attempted)}); `
+      + `attempted + not attempted = every entry (${fmt(attempted)} + ${fmt(connNone)} = ${fmt(rows.length)}).`;
+    $('#c-conn').innerHTML='<div class="kpis" style="margin:4px 0 2px">'
+      + tile('Attempted', fmt(attempted),
+             `${(100*attempted/Math.max(rows.length,1)).toFixed(2)}% of all ${fmt(rows.length)} entries`)
+      + tile('Successful', fmt(connOK),
+             `${(100*connOK/Math.max(attempted,1)).toFixed(1)}% of those attempted`, '--good')
+      + tile('Unsuccessful', fmt(connFail),
+             `${(100*connFail/Math.max(attempted,1)).toFixed(1)}% of those attempted`, '--critical')
+      + tile('Not attempted', fmt(connNone),
+             `${(100*connNone/Math.max(rows.length,1)).toFixed(2)}% of all ${fmt(rows.length)} entries`)
+      + '</div>';
+    $('#t-conn').innerHTML =
+      `<table><thead><tr><th style="text-align:left">State</th><th>new</th><th>tried</th><th>Total</th><th>% of all</th></tr></thead><tbody>`
+      + [['connected successfully', r=>r.last_success>0],
+         ['tried, never succeeded', r=>r.last_success===0&&r.nattempts>0],
+         ['no recorded attempt',    r=>r.last_success===0&&r.nattempts===0]]
+        .map(([lbl,f])=>{
+          const n=rows.filter(r=>r.table==='new'&&f(r)).length;
+          const t=rows.filter(r=>r.table==='tried'&&f(r)).length;
+          return `<tr><td style="text-align:left">${lbl}</td><td>${fmt(n)}</td><td>${fmt(t)}</td>`
+               + `<td>${fmt(n+t)}</td><td>${(100*(n+t)/Math.max(rows.length,1)).toFixed(2)}%</td></tr>`;
+        }).join('')
+      + `<tr><td style="text-align:left"><b>Total</b></td><td><b>${fmt(rows.filter(r=>r.table==='new').length)}</b></td>`
+      + `<td><b>${fmt(rows.filter(r=>r.table==='tried').length)}</b></td><td><b>${fmt(rows.length)}</b></td><td><b>100%</b></td></tr>`
+      + `</tbody></table>`;
     const attRows=[{name:'new',counts:count(nNew,ATT_BANDS,r=>r.nattempts)},
                    {name:'tried',counts:count(nTried,ATT_BANDS,r=>r.nattempts)}];
     stackedBands($('#c-att'),attRows,ATT_BANDS);
@@ -1200,8 +1284,8 @@ function bandTable(rows2,defs){
         return `<tr><td>${r.name}</td>${r.counts.map(c=>`<td>${fmt(c)}</td>`).join('')}<td>${fmt(t)}</td></tr>`;}).join('')
     + `</tbody></table>`;
 }
-function tile(k,v,n,sv){
-  return `<div class="tile"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`
+function tile(k,v,n,sv,titleAttr){
+  return `<div class="tile"${titleAttr?` title="${esc(titleAttr)}"`:''}><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`
        + `<div class="n">${sv?`<span class="sdot" style="background:var(${sv})"></span>`:''}${esc(n)}</div></div>`;
 }
 function dayTable(series){
