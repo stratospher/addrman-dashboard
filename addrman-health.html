@@ -172,13 +172,6 @@
     <div class="bar">
       <span class="pill" id="srcpill"></span>
       <div class="grp"><label for="refsel">Reference time</label><select id="refsel"></select></div>
-      <div class="grp"><label for="rangesel">Range</label>
-        <select id="rangesel">
-          <option value="30">Last 30 days</option>
-          <option value="90" selected>Last 90 days</option>
-          <option value="365">Last 365 days</option>
-          <option value="0">All</option>
-        </select></div>
       <div class="spacer"></div>
       <span class="fname" id="fname"></span>
       <button class="btn" id="reset" type="button">Load another</button>
@@ -187,42 +180,27 @@
     <div id="rendererr" style="display:none;border-left:3px solid var(--critical);background:var(--surface-1);padding:11px 14px;border-radius:0 7px 7px 0;font-size:14px;color:var(--text-secondary);margin-bottom:18px"></div>
     <div class="kpis" id="kpis"></div>
 
-    <h2 class="sec">Last refresh over time</h2>
-    <div class="card">
-      <div class="chead"><h3>new table — entries by last-refresh day</h3>
-        <button class="btn" data-tbl="t-new" type="button" aria-pressed="false">Table</button></div>
-      <div class="cs" id="cs-new"></div>
-      <div class="plot" id="c-new"></div>
-      <div class="tbl" id="t-new"></div>
-    </div>
-    <div class="card">
-      <div class="chead"><h3>tried table — entries by last-refresh day</h3>
-        <button class="btn" data-tbl="t-tried" type="button" aria-pressed="false">Table</button></div>
-      <div class="cs" id="cs-tried"></div>
-      <div class="plot" id="c-tried"></div>
-      <div class="tbl" id="t-tried"></div>
-    </div>
-    <p class="note">
-      An entry's <code>nTime</code> is when it was <em>last refreshed</em>, not when it
-      arrived — every re-announcement overwrites it in place, and relayed addresses carry
-      a 2&nbsp;hour penalty. A peak that survives in a snapshot taken days later is a
-      cohort that stopped being announced.
-    </p>
-
     <h2 class="sec">Age bands</h2>
     <div class="card">
       <div class="chead"><h3>Share of each table by age</h3>
         <button class="btn" data-tbl="t-bands" type="button" aria-pressed="false">Table</button></div>
-      <div class="cs">Age against the reference time. The &gt;30d band is
-        <code>ADDRMAN_HORIZON</code> — one arm of <code>IsTerrible()</code>.</div>
+      <div class="cs">Age against the reference time, over the whole table. The &gt;30d band
+        is <code>ADDRMAN_HORIZON</code> — one arm of <code>IsTerrible()</code>.</div>
+      <p class="note" style="margin:0 0 14px">
+        An entry's <code>nTime</code> is when it was <em>last refreshed</em>, not when it
+        arrived — every re-announcement overwrites it in place, and relayed addresses carry
+        a 2&nbsp;hour penalty. So a band is "how long since anything re-announced this
+        address", which is why the &gt;30d band is the horizon arm and not the whole of
+        <code>IsTerrible()</code>.
+      </p>
       <div class="plot" id="c-bands"></div>
       <div class="legend" id="l-bands"></div>
       <div class="tbl" id="t-bands"></div>
     </div>
 
-    <h2 class="sec">Network mix</h2>
+    <h2 class="sec">Network type</h2>
     <div class="card">
-      <div class="chead"><h3>Entries by network</h3>
+      <div class="chead"><h3>Entries by network type</h3>
         <button class="btn" data-tbl="t-net" type="button" aria-pressed="false">Table</button></div>
       <div class="cs" id="cs-net"></div>
       <div class="plot" id="c-net"></div>
@@ -281,6 +259,23 @@
       <div class="plot" id="c-att"></div>
       <div class="legend" id="l-att"></div>
       <div class="tbl" id="t-att"></div>
+    </div>
+
+    <div class="card" id="card-ls">
+      <div class="chead"><h3>Share of each table by time since last success</h3>
+        <button class="btn" data-tbl="t-ls" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-ls"></div>
+      <div class="plot" id="c-ls"></div>
+      <div class="legend" id="l-ls"></div>
+      <div class="tbl" id="t-ls"></div>
+      <p class="note" style="margin-bottom:2px">
+        <code>m_last_success</code> against the reference time, over the entries that have
+        ever connected — the rest have it at 0, which is "never", not "a long time ago", and
+        would swamp every band. The 7-day edge is <code>ADDRMAN_MIN_FAIL</code>: past it,
+        an entry with 10 or more failed attempts becomes terrible. Note this is a different
+        clock from the age bands — <code>nTime</code> moves whenever any peer re-announces
+        an address, <code>m_last_success</code> only when <em>we</em> connect to it.
+      </p>
     </div>
 
     <div class="card" id="card-terr">
@@ -426,7 +421,7 @@ $('#themeBtn').addEventListener('click',()=>{
   if(S.rows.length) render();
 });
 
-const S = { rows:[], source:'', meta:null, ref:0, range:90, name:'' };
+const S = { rows:[], source:'', meta:null, ref:0, name:'' };
 
 /* ---------- loading ---------- */
 const MAGICS = new Set(['f9beb4d9','0b110907','1c163f28','0a03cf40','fabfb5da']);
@@ -510,6 +505,7 @@ function activate(res, name){
     : 'getrawaddrman';
   $('#card-att').classList.toggle('off', !isPd);
   $('#card-conn').classList.toggle('off', !isPd);
+  $('#card-ls').classList.toggle('off', !isPd);
   $('#card-terr').classList.toggle('off', !isPd);
   $('#s-att').style.display = isPd ? '' : 'none';
   const gsel=$('#gnet'), prev=gsel.value;
@@ -533,8 +529,6 @@ function activate(res, name){
 
 /* ---------- helpers ---------- */
 const iso = ts => new Date(ts*1000).toISOString().replace('T',' ').slice(0,16)+'Z';
-const dayNum = ts => Math.floor(ts/DAY);
-const keyOfNum = dn => new Date(dn*DAY*1000).toISOString().slice(0,10);
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function niceTicks(max,count){
   if(max<=0) return [0,1];
@@ -665,6 +659,8 @@ function barsH(mount, items, opts){
 /* ---------- band definitions ---------- */
 const AGE_BANDS=[{k:'<1d',hi:1,v:'--band-1'},{k:'1–7d',hi:7,v:'--band-2'},
   {k:'7–14d',hi:14,v:'--band-3'},{k:'14–30d',hi:30,v:'--band-4'},{k:'>30d',hi:Infinity,v:'--band-5'}];
+const LS_BANDS=[{k:'<1d',hi:1,v:'--band-1'},{k:'1–7d',hi:7,v:'--band-2'},
+  {k:'7–30d',hi:30,v:'--band-3'},{k:'30–90d',hi:90,v:'--band-4'},{k:'>90d',hi:Infinity,v:'--band-5'}];
 const ATT_BANDS=[{k:'0',hi:1,v:'--band-1'},{k:'1',hi:2,v:'--band-2'},{k:'2',hi:3,v:'--band-3'},
   {k:'3–9',hi:10,v:'--band-4'},{k:'≥10',hi:Infinity,v:'--band-5'}];
 const idx=(defs,x)=>{ for(let i=0;i<defs.length;i++) if(x<defs[i].hi) return i; return defs.length-1; };
@@ -987,29 +983,6 @@ function render_(){
                  [...new Set(rows.map(r=>r.network))].join(', ')),
   ].join('');
 
-  /* histograms */
-  const cutoff=S.range?ref-S.range*DAY:-Infinity;
-  const inRange=r=>r.time>=cutoff && r.time<=ref+600;
-  const span=rows.filter(inRange);
-  let dmin,dmax;
-  if(span.length){ dmin=span.reduce((m,r)=>Math.min(m,dayNum(r.time)),Infinity);
-                   dmax=span.reduce((m,r)=>Math.max(m,dayNum(r.time)),-Infinity); }
-  const daily=list=>{
-    if(!span.length) return [];
-    const m=new Map();
-    for(const r of list) if(inRange(r)){const d=dayNum(r.time); m.set(d,(m.get(d)||0)+1);}
-    const out=[];
-    for(let d=dmin;d<=dmax;d++){const k=keyOfNum(d); out.push({v:m.get(d)||0,full:k,label:k.slice(5)});}
-    return out;
-  };
-  const sNew=daily(nNew), sTried=daily(nTried);
-  const spanTxt=span.length?`${keyOfNum(dmin)} → ${keyOfNum(dmax)}, ${sNew.length} days`:'no data in range';
-  $('#cs-new').textContent=`${fmt(sNew.reduce((a,d)=>a+d.v,0))} entries · ${spanTxt}`;
-  $('#cs-tried').textContent=`${fmt(sTried.reduce((a,d)=>a+d.v,0))} entries · ${spanTxt}`;
-  columnChart($('#c-new'),sNew,{aria:'new table by last-refresh day',pctOf:nNew.length});
-  columnChart($('#c-tried'),sTried,{aria:'tried table by last-refresh day',pctOf:nTried.length});
-  $('#t-new').innerHTML=dayTable(sNew); $('#t-tried').innerHTML=dayTable(sTried);
-
   /* age bands */
   const ageRows=[{name:'new',counts:count(nNew,AGE_BANDS,r=>(ref-r.time)/DAY)},
                  {name:'tried',counts:count(nTried,AGE_BANDS,r=>(ref-r.time)/DAY)}];
@@ -1091,6 +1064,19 @@ function render_(){
     stackedBands($('#c-att'),attRows,ATT_BANDS);
     $('#l-att').innerHTML=legend(ATT_BANDS);
     $('#t-att').innerHTML=bandTable(attRows,ATT_BANDS);
+
+    /* last-success bands, over the connected subset only */
+    const lsNew=nNew.filter(r=>r.last_success>0), lsTried=nTried.filter(r=>r.last_success>0);
+    const lsAge=r=>(ref-r.last_success)/DAY;
+    const lsRows=[{name:'new',counts:count(lsNew,LS_BANDS,lsAge)},
+                  {name:'tried',counts:count(lsTried,LS_BANDS,lsAge)}];
+    const lsTot=lsNew.length+lsTried.length;
+    $('#cs-ls').textContent =
+      `${fmt(lsTot)} entries have ever connected (${fmt(lsNew.length)} new, ${fmt(lsTried.length)} tried)`
+      + ` · the other ${fmt(rows.length-lsTot)} have never connected and are excluded`;
+    stackedBands($('#c-ls'),lsRows,LS_BANDS);
+    $('#l-ls').innerHTML=legend(LS_BANDS);
+    $('#t-ls').innerHTML=bandTable(lsRows,LS_BANDS);
 
     const items=REASONS.map((k,i)=>({k,v:icount[i]}));
     const dead=REASONS.filter((k,i)=>icount[i]===0).length;
@@ -1288,15 +1274,10 @@ function tile(k,v,n,sv,titleAttr){
   return `<div class="tile"${titleAttr?` title="${esc(titleAttr)}"`:''}><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`
        + `<div class="n">${sv?`<span class="sdot" style="background:var(${sv})"></span>`:''}${esc(n)}</div></div>`;
 }
-function dayTable(series){
-  return `<table><thead><tr><th>Day</th><th>Entries</th></tr></thead><tbody>`
-    + series.slice().reverse().map(d=>`<tr><td>${d.full}</td><td>${fmt(d.v)}</td></tr>`).join('')
-    + `</tbody></table>`;
-}
+
 
 /* ---------- wiring ---------- */
 $('#refsel').addEventListener('change',e=>{S.ref=Number(e.target.value); render();});
-$('#rangesel').addEventListener('change',e=>{S.range=Number(e.target.value); render();});
 $('#reset').addEventListener('click',()=>{
   $('#main').style.display='none'; $('#drop').style.display='block';
   $('#err').style.display='none'; $('#file').value='';
