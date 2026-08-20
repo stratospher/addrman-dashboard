@@ -356,10 +356,8 @@
           <select id="gtop"><option value="10">Top 10</option><option value="20" selected>Top 20</option>
             <option value="50">Top 50</option></select></div>
         <label class="chk"><input type="checkbox" id="gnorm"> Normalise to 100%</label>
-        <span class="lg"><i style="background:var(--good)"></i>connected before</span>
-        <span class="lg"><i style="background:var(--critical)"></i>tried, never succeeded</span>
-        <span class="lg"><i style="background:var(--axis)"></i>never tried</span>
       </div>
+      <div class="legend" id="l-ng"></div>
       <div class="plot" id="c-ng"></div>
       <div class="tbl" id="t-ng"></div>
       <p class="note" style="margin-bottom:2px" id="ng-note"></p>
@@ -1155,13 +1153,14 @@ function render_(){
   const glabels=(S.meta && S.meta.groupLabels) || new Map();
   const gnet=$('#gnet').value||'all';
   const gsrc = gnet==='all' ? rows : rows.filter(r=>r.network===gnet);
+  /* Always connection history here — reachable vs unreachable has its own section
+     and answers a different question (an external crawl, not this node's own dials). */
   const gmap=new Map();
   for(const r of gsrc){
     let g=gmap.get(r.group);
     if(!g){ g={key:r.group, n:0, parts:[0,0,0]}; gmap.set(r.group,g); }
     g.n++;
-    if(RC)                        g.parts[r._reach ? 0 : 1]++;
-    else if(!isPd)                g.parts[2]++;      /* no attempt data at all */
+    if(!isPd)                     g.parts[2]++;      /* no attempt data at all */
     else if(r.last_success>0)     g.parts[0]++;
     else if(r.nattempts>0)        g.parts[1]++;
     else                          g.parts[2]++;
@@ -1173,27 +1172,26 @@ function render_(){
   const shown=ranked.slice(0,topN).map(g=>({
     label: glabels.get(g.key)||g.key, n:g.n,
     pct:(100*g.n/gTot).toFixed(2)+'%', parts:g.parts}));
-  const ngSegs = RC ? REACH_SEGS : NG_SEGS;
+  const ngSegs = NG_SEGS;
   $('#cs-ng').textContent =
     `${fmt(ranked.length)} distinct netgroups over ${fmt(gTot)} addresses`
     + ` · mean ${(gTot/Math.max(ranked.length,1)).toFixed(1)} per group`
     + (ranked.length ? ` · largest ${(100*ranked[0].n/gTot).toFixed(2)}%, top 10 hold ${(100*top10/gTot).toFixed(1)}%` : '');
   barsRankedH($('#c-ng'), shown, {aria:'netgroups ranked by address count',
                                   segs:ngSegs, norm:$('#gnorm').checked});
+  $('#l-ng').innerHTML=legend(ngSegs);
   const gCap=Math.min(ranked.length,500);
   $('#t-ng').innerHTML =
     `<table><thead><tr><th>#</th><th style="text-align:left">Netgroup</th><th>Addresses</th><th>% of set</th>`
-    + `<th>Connected</th><th>Failed</th><th>Untried</th><th>% connected</th></tr></thead><tbody>`
+    + ngSegs.map(sg=>`<th>${esc(sg.k)}</th>`).join('')
+    + `<th>% ${esc(ngSegs[0].k)}</th></tr></thead><tbody>`
     + ranked.slice(0,gCap).map((g,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(glabels.get(g.key)||g.key)}</td>`
         + `<td>${fmt(g.n)}</td><td>${(100*g.n/gTot).toFixed(3)}%</td>`
-        + `<td>${fmt(g.parts[0])}</td><td>${fmt(g.parts[1])}</td><td>${fmt(g.parts[2])}</td>`
+        + ngSegs.map((sg,j)=>`<td>${fmt(g.parts[j]||0)}</td>`).join('')
         + `<td>${(100*g.parts[0]/g.n).toFixed(1)}%</td></tr>`).join('')
     + `</tbody></table>`
     + (ranked.length>gCap?`<p style="color:var(--muted);font-size:12.5px;margin:8px 0 0">Showing the first ${fmt(gCap)} of ${fmt(ranked.length)} groups.</p>`:'');
-  $('#ng-note').innerHTML = (RC
-      ? 'Segments follow the loaded reachable set: <b>reachable</b> means the address:port is in it. '
-      : '')
-    + (RC ? '' : isPd
+  $('#ng-note').innerHTML = (isPd
       ? '<b>Connected before</b> is <code>m_last_success &gt; 0</code>; <b>tried, never succeeded</b> '
         + 'is <code>nAttempts &gt; 0</code> with no success; <b>never tried</b> is neither. Most of any '
         + 'addrman is never tried — you only dial a handful of the addresses you hold — so treat the '
