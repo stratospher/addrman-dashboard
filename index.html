@@ -83,9 +83,9 @@
   <a class="card" href="addrman-health.html">
     <div class="t"><span class="dot"></span>Addrman health</div>
     <div class="d">
-      Feed a <code>getrawaddrman</code> dump and see the timestamp distribution across
-      the new and tried tables — last-refresh histogram, age bands, and the
-      terrible-by-horizon share.
+      Feed a <code>peers.dat</code> or <code>getrawaddrman</code> dump: age bands, network
+      type, nRefCount, connection history, <code>IsTerrible()</code> by arm, netgroups,
+      reachable vs unreachable, and a slot map of every bucket.
     </div>
   </a>
 
@@ -111,16 +111,6 @@
   </div>
 
   <div class="card planned">
-    <div class="t"><span class="dot"></span>Network mix, nRefCount, nAttempts</div>
-    <div class="d">
-      Network mix and nRefCount come from a <code>getrawaddrman</code> dump; nAttempts and
-      m_last_success are absent there but <em>are</em> serialized in <code>peers.dat</code>,
-      which also carries nKey — enough to evaluate the full <code>IsTerrible()</code>
-      and to recompute bucketing under an asmap.
-    </div>
-  </div>
-
-  <div class="card planned">
     <div class="t"><span class="dot"></span>Sustained-spam simulator</div>
     <div class="d">Models what a continuous injection rate does to occupancy and eviction.</div>
   </div>
@@ -134,9 +124,15 @@
   <footer>Static pages. Open directly with <code>file://</code> — no server needed.</footer>
 </div>
 <script>
+  /* Safari throws SecurityError on localStorage from a file:// page, and this
+     runs before anything else — so an unguarded access kills the whole script. */
+  const store = {
+    get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
   const KEY='p2p-dash-theme';
   const root=document.documentElement;
-  const saved=localStorage.getItem(KEY);
+  const saved=store.get(KEY);
   if(saved) root.setAttribute('data-theme',saved);
   document.getElementById('themeBtn').addEventListener('click',()=>{
     const cur=root.getAttribute('data-theme');
@@ -144,7 +140,7 @@
       : matchMedia('(prefers-color-scheme: dark)').matches;
     const next = isDark ? 'light' : 'dark';
     root.setAttribute('data-theme',next);
-    localStorage.setItem(KEY,next);
+    store.set(KEY,next);
   });
 </script>
 </body>
