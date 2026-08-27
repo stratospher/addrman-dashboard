@@ -408,13 +408,19 @@ const $ = s => document.querySelector(s);
 const fmt = n => n.toLocaleString();
 const DAY = 86400;
 
+  /* Safari throws SecurityError on localStorage from a file:// page, and this
+   runs before anything else — so an unguarded access kills the whole script. */
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
 const TKEY='p2p-dash-theme', root=document.documentElement;
-if(localStorage.getItem(TKEY)) root.setAttribute('data-theme',localStorage.getItem(TKEY));
+if(store.get(TKEY)) root.setAttribute('data-theme',store.get(TKEY));
 $('#themeBtn').addEventListener('click',()=>{
   const cur=root.getAttribute('data-theme');
   const dark = cur ? cur==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
   const next = dark?'light':'dark';
-  root.setAttribute('data-theme',next); localStorage.setItem(TKEY,next);
+  root.setAttribute('data-theme',next); store.set(TKEY,next);
   /* the slot map bakes theme colours into pixels, so it has to be repainted */
   if(S.rows.length) render();
 });
@@ -828,7 +834,10 @@ function buildSlots(rows, meta, isPd){
        load. Reproduce that here rather than packing entries in file order, which
        drew every tried entry into the first 24 buckets and looked like addrman
        filled buckets sequentially. */
-    const nKey=meta&&meta.nKey;
+    const canBucket = typeof PeersDat!=='undefined'
+                   && typeof PeersDat.bucketPosition==='function'
+                   && typeof PeersDat.triedBucket==='function';
+    const nKey = canBucket ? (meta&&meta.nKey) : null;
     const bt=(meta&&meta.bucketTable)||[];
     if(!nKey){ exact=false; }
     for(let b=0;b<bt.length && b<1024;b++){
@@ -1228,6 +1237,8 @@ function render_(){
 
   /* slot map */
   const sm=buildSlots(rows, S.meta, isPd);
+  const staleLib = isPd && (typeof PeersDat==='undefined'
+                         || typeof PeersDat.bucketPosition!=='function');
   const cell=Number($('#zoom').value)||3;
   S.map={sN:sm.sN, sT:sm.sT, isBad, ref, isPd, cell};
   drawMap($('#m-new'), sm.sN, isBad, cell);
@@ -1247,7 +1258,12 @@ function render_(){
         + 'get both from <code>GetTriedBucket</code> / <code>GetBucketPosition</code> — <code>peers.dat</code> '
         + 'stores no tried bucketing at all. Verified against this file: every stored new bucket\'s computed '
         + 'positions are a collision-free permutation of its 64 slots.')
-    + ' An address with nRefCount &gt; 1 appears in more than one cell.';
+    + ' An address with nRefCount &gt; 1 appears in more than one cell.'
+    + (staleLib
+        ? ' <b>peersdat.js is out of date</b> — it has no bucket-selection functions, so entries are'
+          + ' packed in file order rather than placed in their real buckets. Hard-reload the page'
+          + ' (Ctrl/Cmd+Shift+R) to pick up the current script.'
+        : '');
 
   const badList=[];
   for(let i=0;i<rows.length && badList.length<400;i++) if(isBad[i]) badList.push(rows[i]);
