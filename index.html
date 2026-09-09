@@ -1541,17 +1541,13 @@ function render_(){
      bounds how much of the new table one relaying operator can reach. Grouped with
      the same GetGroup() as the address side; the group is computed lazily and cached
      on the row, since a source repeats across thousands of entries. */
-  const smap=new Map(), slabels=new Map();
+  /* _sg and its display label _sgl are cached on the row by the tried-source pass
+     above, which walks every row — so read the label from there rather than filling
+     a second map here, which would never run. */
+  const smap=new Map();
   for(const r of rows){
-    if(r._sg===undefined){
-      const g=(typeof PeersDat!=='undefined' && r.source)
-        ? PeersDat.netGroup(r.source_network, PeersDat.addrBytes(r.source_network, r.source))
-        : null;
-      r._sg = g ? g.key : '?';
-      if(g && !slabels.has(g.key)) slabels.set(g.key, g.label);
-    }
     let e=smap.get(r._sg);
-    if(!e){ e={key:r._sg, n:0, parts:[0,0,0], groups:new Set()}; smap.set(r._sg,e); }
+    if(!e){ e={key:r._sg, label:r._sgl, n:0, parts:[0,0,0], groups:new Set()}; smap.set(r._sg,e); }
     e.n++;
     /* How far the announcements spread: a raw count says nothing about whether a
        source is relaying the network at large or stuffing a handful of groups. */
@@ -1572,7 +1568,7 @@ function render_(){
           + ` · top 10 announced ${fmt(sTop10)} entries (${(100*sTop10/sTot).toFixed(1)}%)`
         : '');
   const sShown=sranked.slice(0,Number($('#stop').value)||20).map(g=>({
-    label: slabels.get(g.key)||g.key, n:g.n,
+    label: g.label||g.key, n:g.n,
     pct:(100*g.n/sTot).toFixed(2)+'%', parts:g.parts}));
   barsRankedH($('#c-src'), sShown, {aria:'source netgroups ranked by entries announced',
                                     segs:NG_SEGS, norm:$('#snorm').checked});
@@ -1581,7 +1577,7 @@ function render_(){
   $('#t-src').innerHTML =
     `<table><thead><tr><th>#</th><th style="text-align:left">Source netgroup</th><th>Entries</th><th>% of all</th>`
     + `<th>Address netgroups</th>` + NG_SEGS.map(sg=>`<th>${sg.k}</th>`).join('') + `</tr></thead><tbody>`
-    + sranked.slice(0,sCap).map((g,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(slabels.get(g.key)||g.key)}</td>`
+    + sranked.slice(0,sCap).map((g,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(g.label||g.key)}</td>`
         + `<td>${fmt(g.n)}</td><td>${(100*g.n/sTot).toFixed(3)}%</td><td>${fmt(g.groups.size)}</td>`
         + NG_SEGS.map((sg,j)=>`<td>${fmt(g.parts[j]||0)}</td>`).join('') + `</tr>`).join('')
     + `</tbody></table>`
