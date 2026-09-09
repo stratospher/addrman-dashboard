@@ -39,14 +39,13 @@
   body{margin:0;background:var(--page);color:var(--text-primary);
        font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 24px 80px}
   .wrap{max-width:1080px;margin:0 auto}
-  a{color:var(--series-1)}
-  header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:6px}
-  h1{font-size:24px;margin:0;letter-spacing:-0.01em}
-  .crumb{font-size:13px;color:var(--muted);margin-bottom:14px}
+  a{color:var(--series-1);text-decoration:underline}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:26px}
+  h1{font-size:27.5px;margin:0;letter-spacing:-0.01em}
   .sub{color:var(--text-secondary);margin:0 0 28px;max-width:70ch}
   button{font:inherit;cursor:pointer}
   .btn{background:var(--surface-1);color:var(--text-secondary);border:1px solid var(--border);
-       border-radius:7px;padding:6px 11px;font-size:13px}
+       border-radius:7px;padding:6px 11px;font-size:15px}
   .btn:hover{color:var(--text-primary);border-color:var(--muted)}
   .btn[aria-pressed="true"]{background:var(--series-1);border-color:var(--series-1);color:#fff}
   .btn:focus-visible{outline:2px solid var(--series-1);outline-offset:2px}
@@ -54,184 +53,286 @@
   #drop{border:1.5px dashed var(--axis);border-radius:12px;padding:44px 24px;text-align:center;
         background:var(--surface-1)}
   #drop.over{border-color:var(--series-1)}
-  #drop h3{margin:0 0 6px;font-size:17px}
-  #drop p{margin:0 0 16px;color:var(--text-secondary);font-size:14px}
+  #drop h3{margin:0 0 6px;font-size:19.5px}
+  #drop p{margin:0 0 16px;color:var(--text-secondary);font-size:16px}
   .filelabel{display:inline-block;background:var(--series-1);color:#fff;border-radius:8px;
-             padding:9px 18px;font-size:14px;font-weight:500;cursor:pointer}
+             padding:9px 18px;font-size:16px;font-weight:500;cursor:pointer}
   .filelabel:focus-within{outline:2px solid var(--series-1);outline-offset:2px}
   #file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
   .srcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;
         max-width:720px;margin:22px auto 0;text-align:left}
   .srcbox{border:1px solid var(--border);border-radius:9px;padding:13px 15px;background:var(--page)}
-  .srcbox b{font-size:13.5px} .srcbox p{margin:5px 0 0;font-size:12.5px}
+  .srcbox b{font-size:15.5px} .srcbox p{margin:5px 0 0;font-size:14.5px}
   #err{display:none;margin-top:18px;border-left:3px solid var(--critical);background:var(--page);
-       padding:11px 14px;border-radius:0 7px 7px 0;font-size:14px;color:var(--text-secondary);text-align:left}
-  #busy{display:none;margin-top:18px;color:var(--text-secondary);font-size:14px}
+       padding:11px 14px;border-radius:0 7px 7px 0;font-size:16px;color:var(--text-secondary);text-align:left}
+  #busy{display:none;margin-top:18px;color:var(--text-secondary);font-size:16px}
 
   .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;background:var(--surface-1);
        border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:20px}
   .bar .grp{display:flex;align-items:center;gap:8px}
-  .bar label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
-  select{font:inherit;font-size:13px;background:var(--page);color:var(--text-primary);
+  .bar label{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  select{font:inherit;font-size:15px;background:var(--page);color:var(--text-primary);
          border:1px solid var(--border);border-radius:7px;padding:5px 8px;max-width:340px}
   .spacer{flex:1}
-  .fname{font-size:13px;color:var(--text-secondary);
+  .fname{font-size:15px;color:var(--text-secondary);
          font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-  .pill{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
-        border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--text-secondary)}
+  .refval{font-size:15px;color:var(--text-primary);
+          font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:26px}
+  #kpis{margin-bottom:26px}
+  /* explicit rows: tiles stretch to fill each row, and wrap only when too narrow */
+  .kpirow{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+  .kpirow:last-child{margin-bottom:0}
+  .kpirow>.tile{flex:1 1 168px}
   .tile{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:15px 17px}
-  .tile .k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
-  .tile .v{font-size:27px;line-height:1.15;margin-top:7px;letter-spacing:-0.02em}
-  .tile .n{font-size:12.5px;color:var(--text-secondary);margin-top:5px;display:flex;align-items:center;gap:6px}
+  .tile .k{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .tile .v{font-size:31px;line-height:1.15;margin-top:7px;letter-spacing:-0.02em}
+  .tile .n{font-size:14.5px;color:var(--text-secondary);margin-top:5px;display:flex;align-items:center;gap:6px}
+  .tile .f{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45}
   .sdot{width:8px;height:8px;border-radius:50%;flex:none}
 
   .card{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;
         padding:18px 20px 14px;margin-bottom:18px}
   .card.off{display:none}
   .chead{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
-  .chead h3{margin:0;font-size:15.5px;font-weight:600}
-  .cs{font-size:13px;color:var(--text-secondary);margin:3px 0 14px}
+  /* keeps the Table button on the right in cards whose h3 has been removed */
+  .chead>.btn{margin-left:auto}
+  .chead h3{margin:0;font-size:18px;font-weight:600}
+  .cs{font-size:15px;color:var(--text-secondary);margin:3px 0 14px}
   .plot{width:100%;overflow-x:auto}
   svg{display:block}
   .tbl{display:none;margin-top:12px;max-height:340px;overflow:auto}
-  table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+  table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
   th,td{text-align:right;padding:5px 10px;border-bottom:1px solid var(--grid);white-space:nowrap}
   th:first-child,td:first-child{text-align:left}
   thead th{position:sticky;top:0;background:var(--surface-1);color:var(--muted);
-           font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+           font-size:13px;text-transform:uppercase;letter-spacing:.05em}
   .legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 0 2px}
-  .lg{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary)}
+  .lg{display:flex;align-items:center;gap:7px;font-size:15px;color:var(--text-secondary)}
   .lg i{width:11px;height:11px;border-radius:3px;flex:none;display:block}
 
   #tip{position:fixed;pointer-events:none;z-index:50;display:none;background:var(--surface-1);
-       border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;
+       border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:15px;
        box-shadow:0 6px 22px rgba(0,0,0,.16);max-width:280px}
   #tip .tt{font-weight:600;margin-bottom:3px}
   #tip .tr{color:var(--text-secondary);font-variant-numeric:tabular-nums}
 
   .maprow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;margin:2px 0 14px}
-  .chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-secondary);cursor:pointer}
+  .chk{display:flex;align-items:center;gap:7px;font-size:15px;color:var(--text-secondary);cursor:pointer}
   .mapwrap{display:flex;flex-direction:column;gap:22px;align-items:stretch}
   .mapwrap>div{max-width:100%}
   .mapscroll{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:6px;
              padding:8px;background:var(--surface-1)}
-  .mapcap{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600;
+  .mapcap{font-size:14px;color:var(--muted);margin-bottom:6px;font-weight:600;
           text-transform:uppercase;letter-spacing:.05em}
   canvas{display:block;cursor:crosshair}
+  .intro{margin-bottom:8px}
+  .intro p{color:var(--text-secondary);font-size:16px;line-height:1.62;margin:0 0 12px}
+  .intro h4{font-size:18px;letter-spacing:-0.01em;color:var(--text-primary);
+            font-weight:600;margin:26px 0 10px}
+  .intro .corr{color:var(--muted)}
+  table.checks{border-collapse:collapse;width:100%;margin:10px 0 26px;font-size:15px}
+  table.checks td{border:1px solid var(--border);padding:11px 13px;text-align:left;
+                  white-space:normal;vertical-align:top;color:var(--text-secondary)}
+  table.checks td:first-child{width:34%;color:var(--text-primary);font-weight:600}
+  table.checks td.verdict{width:120px;text-align:center;font-size:22px;line-height:1.3}
+  table.checks .m{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:3px}
+  .intro b{color:var(--text-primary);font-weight:600}
+  .tile .n,.tile .f{overflow-wrap:anywhere}
   .note{border-left:3px solid var(--axis);padding:2px 0 2px 14px;color:var(--text-secondary);
-        font-size:13.5px;margin:16px 0}
-  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+        font-size:15.5px;margin:16px 0}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14.5px;
        background:var(--page);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
-  h2.sec{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+  h2.sec{font-size:14px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
          margin:34px 0 14px;font-weight:600}
+  h3.sec{font-size:21px;letter-spacing:-0.01em;color:var(--text-primary);font-weight:600;
+         margin:36px 0 14px;scroll-margin-top:14px}
+  h2.grp{font-size:26px;letter-spacing:-0.015em;color:var(--text-primary);font-weight:600;
+         margin:52px 0 6px;padding-bottom:11px;border-bottom:1px solid var(--border);
+         scroll-margin-top:14px}
+  .toc{margin:0 0 30px;font-size:15.5px}
+  .toc ul{list-style:none;margin:0;padding:0}
+  .toc ul ul{margin:3px 0 8px}
+  .toc li{margin:3px 0;color:var(--text-secondary)}
+  .toc>ul>li{margin:9px 0;color:var(--text-primary);font-weight:600}
+  .toc ul ul li{font-weight:400}
+  .toc a{color:inherit;text-decoration:underline;text-underline-offset:2px;
+         text-decoration-color:var(--axis);display:inline-block}
+  .toc a:hover{color:var(--text-primary);text-decoration-color:currentColor}
+  .toc .n{display:inline-block;min-width:2.4em;color:var(--muted);
+          font-variant-numeric:tabular-nums}
+  .toc ul ul .n{min-width:2.9em;padding-left:1.2em}
+  html{scroll-behavior:smooth}
   #main{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="crumb"><a href="index.html">← Dashboards</a></div>
   <header>
     <h1>Addrman health</h1>
     <button class="btn" id="themeBtn" type="button">Theme</button>
   </header>
-  <p class="sub">
-    Distribution of timestamps and connection state across the <code>new</code> and
-    <code>tried</code> tables. Everything is parsed in this page — the file never
-    leaves your machine, and nothing is written back.
-  </p>
-
   <div id="drop">
     <h3>Open an addrman</h3>
     <p>Drag a file here, or</p>
-    <label class="filelabel">Choose file<input type="file" id="file" accept=".json,.gz,.dat"></label>
+    <label class="filelabel">Choose peers.dat<input type="file" id="file" accept=".json,.gz,.dat"></label>
+    <!-- getrawaddrman source — commented out
     <div class="srcs">
       <div class="srcbox">
-        <b>peers.dat</b> — the full picture
-        <p style="color:var(--text-secondary)">
-          Carries <code>nAttempts</code>, <code>m_last_success</code> and <code>nKey</code>,
-          so the whole of <code>IsTerrible()</code> can be evaluated. Copy the file first;
-          the node rewrites it every 15 minutes.
-        </p>
-      </div>
-      <div class="srcbox">
-        <b>getrawaddrman</b> — timestamps only
+        <b>getrawaddrman</b> &mdash; timestamps only
         <p style="color:var(--text-secondary)">
           <code>bitcoin-cli getrawaddrman &gt; addrman.json</code><br>
-          Also reads the <code>{"t":…,"d":…}</code> snapshot wrapper and <code>.json.gz</code>.
+          Also reads the snapshot wrapper and <code>.json.gz</code>.
           For <code>.zst</code>, run <code>zstd -d</code> first.
         </p>
       </div>
     </div>
+    -->
     <div id="busy">Parsing…</div>
     <div id="err"></div>
   </div>
 
   <div id="main">
     <div class="bar">
-      <span class="pill" id="srcpill"></span>
-      <div class="grp"><label for="refsel">Reference time</label><select id="refsel"></select></div>
+      <div class="grp"><label>Reference time</label><span class="refval" id="refval"></span></div>
       <div class="spacer"></div>
       <span class="fname" id="fname"></span>
       <button class="btn" id="reset" type="button">Load another</button>
     </div>
 
-    <div id="rendererr" style="display:none;border-left:3px solid var(--critical);background:var(--surface-1);padding:11px 14px;border-radius:0 7px 7px 0;font-size:14px;color:var(--text-secondary);margin-bottom:18px"></div>
-    <div class="kpis" id="kpis"></div>
+    <h2 class="grp" id="toc">Index</h2>
+    <nav class="toc" aria-label="Contents">
+      <ul>
+        <li><a href="#g1"><span class="n">1.</span> General stats</a>
+          <ul>
+            <li><a href="#s-age"><span class="n">1.1</span> Age distribution</a></li>
+            <li><a href="#s-net"><span class="n">1.2</span> Network distribution</a></li>
+            <li><a href="#s-ref"><span class="n">1.3</span> nRefCount distribution</a></li>
+          </ul></li>
+        <li><a href="#g2"><span class="n">2.</span> Reachability stats</a>
+          <ul>
+            <li><a href="#s-att"><span class="n">2.1</span> Connection attempts</a></li>
+            <li><a href="#s-reach"><span class="n">2.2</span> bitnod.es reachability</a></li>
+          </ul></li>
+        <li><a href="#g3"><span class="n">3.</span> isTerrible stats</a></li>
+        <li><a href="#g4"><span class="n">4.</span> Eclipse resistance stats</a>
+          <ul>
+            <li><a href="#s-ports"><span class="n">4.1</span> Addresses on many ports</a></li>
+            <li><a href="#s-tsrc"><span class="n">4.2</span> Source netgroups in the tried table</a></li>
+            <li><a href="#s-ng"><span class="n">4.3</span> Netgroups in full addrman</a></li>
+            <li><a href="#s-src"><span class="n">4.4</span> Source netgroups in full addrman</a></li>
+          </ul></li>
+      </ul>
+    </nav>
 
-    <h2 class="sec">Age bands</h2>
+    <div id="rendererr" style="display:none;border-left:3px solid var(--critical);background:var(--surface-1);padding:11px 14px;border-radius:0 7px 7px 0;font-size:16px;color:var(--text-secondary);margin-bottom:18px"></div>
+    <div id="kpis"></div>
+
+    <div class="intro">
+      <p>Addrman health can be thought of as a combination of 3 aspects of the IP addresses inside the addrman: <b>reachability health</b> +
+        <b>eclipse resistance health</b> + the <b>ability to evict addresses</b> from addrman
+        (<code>IsTerrible</code>: only if we evict stale IP addresses can we insert newer ones).</p>
+
+      <h4>1. Reachability health</h4>
+      <table class="checks">
+        <tbody>
+          <tr>
+            <td>Successful connections &gt; Attempted but failed connections</td>
+            <td>If this is true, yay! Our addrman has much more reachable addresses</td>
+            <td class="verdict" id="v-r1"></td>
+          </tr>
+          <tr>
+            <td>Reachability of our addrman IP addresses according to 3rd party
+              <a href="https://bitnod.es/" target="_blank" rel="noopener">bitnod.es</a> snapshot
+              <span id="bitnodes-date"></span></td>
+            <td>&gt; 30% reachable means we hopefully have much more reachable IPs.
+              bitnod.es doesn't have I2P/CJDNS data btw — so ignored.</td>
+            <td class="verdict" id="v-r2"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>2. Eclipse resistance health</h4>
+      <table class="checks">
+        <tbody>
+          <tr>
+            <td>There aren't many IPs with multiple ports (&gt;5 ports)</td>
+            <td>&lt;50 such IPs - then it's a good thing. Otherwise, these IPs would have taken nice
+              good slots in the addrman + would be hard to evict if they are kept on being refreshed</td>
+            <td class="verdict" id="v-e1"></td>
+          </tr>
+          <tr>
+            <td>Not many addresses with <code>nRefCount</code> &gt; 1</td>
+            <td>Not normal addrman trend in clearnet</td>
+            <td class="verdict" id="v-e2"></td>
+          </tr>
+          <tr>
+            <td>There aren't netgroups which we attempt to connect much more often than others</td>
+            <td>over-dialled + over-connected netgroup</td>
+            <td class="verdict" id="v-e3"></td>
+          </tr>
+          <tr>
+            <td>There is no 1 source netgroup influencing a large number of the addresses we end up
+              picking and connecting to</td>
+            <td>Largest source netgroup in tried</td>
+            <td class="verdict" id="v-e4"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>3. Ability to evict addresses from addrman</h4>
+      <table class="checks">
+        <tbody>
+          <tr>
+            <td>isTerrible</td>
+            <td>&gt;10% is unusual in current addrman. Something is happening in the P2P network
+              (ex: addr spam attack stopped and many addresses getting stale)</td>
+            <td class="verdict" id="v-t1"></td>
+          </tr>
+          <tr>
+            <td>Median age</td>
+            <td>Too fresh (&lt;3 days) isn't good - it's the quality of gossip being tampered by
+              someone in the P2P network. If it's too old - node is probably offline/not
+              participating in address relay.</td>
+            <td class="verdict" id="v-t2"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="grp" id="g1">1. General stats</h2>
+
+    <h3 class="sec" id="s-age">1.1 Age distribution</h3>
     <div class="card">
-      <div class="chead"><h3>Share of each table by age</h3>
+      <div class="chead">
         <button class="btn" data-tbl="t-bands" type="button" aria-pressed="false">Table</button></div>
-      <div class="cs">Age against the reference time, over the whole table. The &gt;30d band
-        is <code>ADDRMAN_HORIZON</code> — one arm of <code>IsTerrible()</code>.</div>
-      <p class="note" style="margin:0 0 14px">
-        An entry's <code>nTime</code> is when it was <em>last refreshed</em>, not when it
-        arrived — every re-announcement overwrites it in place, and relayed addresses carry
-        a 2&nbsp;hour penalty. So a band is "how long since anything re-announced this
-        address", which is why the &gt;30d band is the horizon arm and not the whole of
-        <code>IsTerrible()</code>.
-      </p>
-      <div class="plot" id="c-bands"></div>
+      <div class="plot" id="c-bands" style="margin-top:14px"></div>
       <div class="legend" id="l-bands"></div>
       <div class="tbl" id="t-bands"></div>
     </div>
 
-    <h2 class="sec">Network type</h2>
+    <h3 class="sec" id="s-net">1.2 Network distribution</h3>
     <div class="card">
-      <div class="chead"><h3>Entries by network type</h3>
+      <div class="chead">
         <button class="btn" data-tbl="t-net" type="button" aria-pressed="false">Table</button></div>
       <div class="cs" id="cs-net"></div>
       <div class="plot" id="c-net"></div>
       <div class="tbl" id="t-net"></div>
-      <p class="note" style="margin-bottom:2px">
-        Counts are whatever the addrman holds, not what is reachable — an entry exists
-        whether or not this node has the transport configured. A network with entries but
-        nothing in <code>tried</code> usually means the transport is off rather than that
-        the peers are down.
-      </p>
     </div>
 
-    <h2 class="sec">Bucket references</h2>
+    <h3 class="sec" id="s-ref">1.3 new table nRefCount distribution</h3>
     <div class="card">
-      <div class="chead"><h3>new-table addresses by nRefCount</h3>
+      <div class="chead">
         <button class="btn" data-tbl="t-ref" type="button" aria-pressed="false">Table</button></div>
       <div class="cs" id="cs-ref"></div>
       <div class="plot" id="c-ref"></div>
       <div class="tbl" id="t-ref"></div>
-      <p class="note" style="margin-bottom:2px">
-        An address enters a new bucket chosen from <em>its source's</em> netgroup, so it
-        gains a reference only when a fresh source announces it — up to
-        <code>ADDRMAN_NEW_BUCKETS_PER_ADDRESS</code> = 8. References are what resist
-        eviction and raise selection odds, so the distribution reads as how well
-        corroborated your address set is. A flood arriving through few sources piles up
-        at 1. Tried entries are excluded: <code>MakeTried()</code> clears them from every
-        new bucket, so their nRefCount is 0.
-      </p>
     </div>
 
-    <h2 class="sec" id="s-att">Connection attempts</h2>
+    <h2 class="grp" id="g2">2. Reachability stats</h2>
+
+    <h3 class="sec" id="s-att">2.1 our connection attempts</h3>
     <div class="card" id="card-conn">
       <div class="chead"><h3>Connection history</h3>
         <button class="btn" data-tbl="t-conn" type="button" aria-pressed="false">Table</button></div>
@@ -240,14 +341,7 @@
       <div class="tbl" id="t-conn"></div>
       <p class="note" style="margin-bottom:2px">
         <b>Attempted</b> is every entry with evidence of a dial: a recorded success, a
-        recorded failure, or both. Successful and unsuccessful partition it, and adding the
-        no-recorded-attempt remainder accounts for every entry in the table.
-        That remainder is not quite "never dialled": <code>Attempt_</code> only
-        increments <code>nAttempts</code> when <code>m_last_count_attempt &lt; m_last_good</code>,
-        so at most one failure is counted per period of general connectivity — an address can
-        have been dialled without the counter moving. And <code>Good_</code> resets
-        <code>nAttempts</code> to 0 on success, so it means failures <em>since</em> the last
-        success, never a lifetime total.
+        recorded failure, or both. Successful and unsuccessful partition it.
       </p>
     </div>
 
@@ -264,63 +358,38 @@
     <div class="card" id="card-ls">
       <div class="chead"><h3>Share of each table by time since last success</h3>
         <button class="btn" data-tbl="t-ls" type="button" aria-pressed="false">Table</button></div>
-      <div class="cs" id="cs-ls"></div>
-      <div class="plot" id="c-ls"></div>
+      <div class="plot" id="c-ls" style="margin-top:14px"></div>
       <div class="legend" id="l-ls"></div>
       <div class="tbl" id="t-ls"></div>
-      <p class="note" style="margin-bottom:2px">
-        <code>m_last_success</code> against the reference time, over the entries that have
-        ever connected — the rest have it at 0, which is "never", not "a long time ago", and
-        would swamp every band. The 7-day edge is <code>ADDRMAN_MIN_FAIL</code>: past it,
-        an entry with 10 or more failed attempts becomes terrible. Note this is a different
-        clock from the age bands — <code>nTime</code> moves whenever any peer re-announces
-        an address, <code>m_last_success</code> only when <em>we</em> connect to it.
-      </p>
     </div>
 
-    <div class="card" id="card-terr">
-      <div class="chead"><h3>Why entries are terrible</h3>
-        <button class="btn" data-tbl="t-terr" type="button" aria-pressed="false">Table</button></div>
-      <div class="cs" id="cs-terr"></div>
-      <div class="plot" id="c-terr"></div>
-      <div class="tbl" id="t-terr"></div>
-      <p class="note" style="margin-bottom:2px">
-        Bars count each arm <em>independently</em>, so an entry satisfying two is counted
-        twice and the bars can exceed the total. The table adds the first-match column,
-        which does sum to it. The one arm not evaluated is the
-        <code>m_last_try &lt;= 1min</code> exemption — <code>m_last_try</code> is memory-only
-        and reads as 0 from a file, so it can never fire here; on a live node it would only
-        spare entries tried in the last minute.
-      </p>
-    </div>
-
-    <h2 class="sec">Reachable vs unreachable addresses</h2>
+    <h3 class="sec" id="s-reach">2.2 Reachability according to bitnod.es</h3>
     <div class="card">
-      <div class="chead"><h3>Reachable vs unreachable, by network</h3>
+      <div class="chead">
         <button class="btn" data-tbl="t-reach" type="button" aria-pressed="false">Table</button></div>
       <div class="cs" id="cs-reach"></div>
       <div id="reach-load">
-        <p style="color:var(--text-secondary);font-size:14px;margin:4px 0 14px">
+        <p style="color:var(--text-secondary);font-size:16px;margin:4px 0 14px">
           No reachable-node data alongside this page. Run
           <code>./refresh-reachable.sh</code> in this directory and reload — it writes
           <code>reachable-data.js</code>, which loads automatically from then on.
           The page cannot download it itself: the host sends no
           <code>Access-Control-Allow-Origin</code>, so a browser blocks the request.
         </p>
-        <label class="filelabel" style="font-size:13px;padding:7px 14px">Or pick a file<input type="file" id="rfile" accept=".csv,.json,.txt,.gz"></label>
-        <span id="rerr" style="display:none;color:var(--critical);font-size:13px;margin-left:12px"></span>
+        <label class="filelabel" style="font-size:15px;padding:7px 14px">Or pick a file<input type="file" id="rfile" accept=".csv,.json,.txt,.gz"></label>
+        <span id="rerr" style="display:none;color:var(--critical);font-size:15px;margin-left:12px"></span>
       </div>
       <div id="reach-body" style="display:none">
-        <p id="reach-src" style="font-size:12.5px;color:var(--muted);margin:0 0 10px"></p>
+        <p id="reach-src" style="font-size:14.5px;color:var(--muted);margin:0 0 10px"></p>
         <div class="maprow" id="rdatewrap" style="display:none">
-          <div class="grp"><label for="rdate" style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Seen within</label>
+          <div class="grp"><label for="rdate" style="font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Seen within</label>
             <select id="rdate">
               <option value="1">Latest export day</option>
-              <option value="7" selected>7 days</option>
+              <option value="7">7 days</option>
               <option value="30">30 days</option>
-              <option value="all">Whole file</option>
+              <option value="all" selected>Whole file</option>
             </select></div>
-          <span style="font-size:12.5px;color:var(--muted)">the daily CSV is cumulative — each row carries the day that node was last exported</span>
+          <span style="font-size:14.5px;color:var(--muted)">the daily CSV is cumulative — each row carries the day that node was last exported</span>
         </div>
         <div class="legend">
           <span class="lg"><i style="background:var(--good)"></i>reachable</span>
@@ -330,29 +399,61 @@
         <div class="tbl" id="t-reach"></div>
       </div>
       <p class="note" style="margin-bottom:2px">
-        Matching is on raw address bytes plus port rather than on text, so compressed IPv6
-        and bracketed forms compare correctly.
-        Reachable means the address appears in the loaded set for the selected window.
-        Matching is on raw address bytes plus port rather than on text, so compressed IPv6
-        and bracketed forms compare correctly. Core stores I2P with <b>port 0</b> — that
-        transport has no TCP port — while the export lists nodes on 8333, so a port-0 entry
-        is matched on address alone; everything else must match address <em>and</em> port.
-        <b>A network the export does not cover reads as 0% reachable.</b> The bitnod.es daily
-        CSV carries IPv4, IPv6 and onion only — it has no I2P or CJDNS rows at all, so those
-        entries are unmeasured rather than genuinely unreachable. Check the per-network table
-        before drawing conclusions about a network with no reachable addresses.
+        Ports are not part of the join: the bitnod.es export lists exactly one port per
+        address, so it cannot corroborate a second one.
       </p>
     </div>
 
-    <h2 class="sec">Netgroups</h2>
+    <h2 class="grp" id="g3">3. isTerrible stats</h2>
+    <div class="card" id="card-terr">
+      <div class="chead">
+        <button class="btn" data-tbl="t-terr" type="button" aria-pressed="false">Table</button></div>
+      <div class="plot" id="c-terr" style="margin-top:14px"></div>
+      <div class="tbl" id="t-terr"></div>
+    </div>
+
+    <h2 class="grp" id="g4">4. Eclipse resistance stats</h2>
+
+    <h3 class="sec" id="s-ports">4.1 Addresses on many ports</h3>
     <div class="card">
-      <div class="chead"><h3>Netgroups ranked by address count</h3>
+      <div class="chead">
+        <button class="btn" data-tbl="t-ports" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-ports"></div>
+      <div class="maprow">
+        <div class="grp"><label for="ptop" style="font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Show</label>
+          <select id="ptop"><option value="5">Top 5</option><option value="10" selected>Top 10</option>
+            <option value="20">Top 20</option><option value="50">Top 50</option></select></div>
+      </div>
+      <div class="legend" id="l-ports"></div>
+      <div class="plot" id="c-ports"></div>
+      <div class="tbl" id="t-ports"></div>
+    </div>
+
+    <h3 class="sec" id="s-tsrc">4.2 Source netgroups in the tried table</h3>
+    <div class="card">
+      <div class="chead">
+        <button class="btn" data-tbl="t-tsrc" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-tsrc"></div>
+      <div class="maprow">
+        <div class="grp"><label for="ttop" style="font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Show</label>
+          <select id="ttop"><option value="10">Top 10</option><option value="20" selected>Top 20</option>
+            <option value="50">Top 50</option></select></div>
+        <label class="chk"><input type="checkbox" id="tnorm"> Normalise to 100%</label>
+      </div>
+      <div class="legend" id="l-tsrc"></div>
+      <div class="plot" id="c-tsrc"></div>
+      <div class="tbl" id="t-tsrc"></div>
+    </div>
+
+    <h3 class="sec" id="s-ng">4.3 Netgroups in full addrman</h3>
+    <div class="card">
+      <div class="chead">
         <button class="btn" data-tbl="t-ng" type="button" aria-pressed="false">Table</button></div>
       <div class="cs" id="cs-ng"></div>
       <div class="maprow">
-        <div class="grp"><label for="gnet" style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Network</label>
+        <div class="grp"><label for="gnet" style="font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Network</label>
           <select id="gnet"><option value="all" selected>All</option></select></div>
-        <div class="grp"><label for="gtop" style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Show</label>
+        <div class="grp"><label for="gtop" style="font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Show</label>
           <select id="gtop"><option value="10">Top 10</option><option value="20" selected>Top 20</option>
             <option value="50">Top 50</option></select></div>
         <label class="chk"><input type="checkbox" id="gnorm"> Normalise to 100%</label>
@@ -363,13 +464,30 @@
       <p class="note" style="margin-bottom:2px" id="ng-note"></p>
     </div>
 
+    <h3 class="sec" id="s-src">4.4 Source netgroups in full addrman</h3>
+    <div class="card">
+      <div class="chead">
+        <button class="btn" data-tbl="t-src" type="button" aria-pressed="false">Table</button></div>
+      <div class="cs" id="cs-src"></div>
+      <div class="maprow">
+        <div class="grp"><label for="stop" style="font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Show</label>
+          <select id="stop"><option value="10">Top 10</option><option value="20" selected>Top 20</option>
+            <option value="50">Top 50</option></select></div>
+        <label class="chk"><input type="checkbox" id="snorm"> Normalise to 100%</label>
+      </div>
+      <div class="legend" id="l-src"></div>
+      <div class="plot" id="c-src"></div>
+      <div class="tbl" id="t-src"></div>
+    </div>
+
+    <!-- Slot map — commented out
     <h2 class="sec">Slot map</h2>
     <div class="card">
       <div class="chead"><h3>Every slot, coloured by <code>IsTerrible()</code></h3>
         <button class="btn" data-tbl="t-map" type="button" aria-pressed="false">Table</button></div>
       <div class="cs" id="cs-map"></div>
       <div class="maprow">
-        <div class="grp"><label for="zoom" style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Slot size</label>
+        <div class="grp"><label for="zoom" style="font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600">Slot size</label>
           <select id="zoom">
             <option value="2">2 px</option>
             <option value="3" selected>3 px</option>
@@ -391,11 +509,8 @@
       <p class="note" style="margin-bottom:2px" id="map-note"></p>
     </div>
 
-    <h2 class="sec">What this source can and cannot tell you</h2>
-    <div class="card"><table>
-      <thead><tr><th>Property</th><th style="text-align:left">This file</th><th style="text-align:left">Note</th></tr></thead>
-      <tbody id="deriv"></tbody>
-    </table></div>
+    -->
+
   </div>
 </div>
 <div id="tip"></div>
@@ -447,10 +562,8 @@ async function decodeText(buf, name){
 }
 
 function ingestJson(raw){
-  let fileRef=null, d=raw;
-  if(raw && typeof raw==='object' && raw.d && (raw.d.new || raw.d.tried)){
-    fileRef = Number.isFinite(raw.t) ? raw.t : null; d = raw.d;
-  }
+  let d=raw;
+  if(raw && typeof raw==='object' && raw.d && (raw.d.new || raw.d.tried)) d = raw.d;
   if(!d || typeof d!=='object' || (!d.new && !d.tried))
     throw new Error('Not a getrawaddrman dump — expected top-level "new" and "tried" objects.');
   const rows=[], slotCount={};
@@ -481,32 +594,20 @@ function ingestJson(raw){
       if(!groupLabels.has(g.key)) groupLabels.set(g.key, g.label);
     }
   }
-  return { source:'getrawaddrman', rows, fileRef, meta:{groupLabels} };
+  return { source:'getrawaddrman', rows, meta:{groupLabels} };
 }
 
 function ingestPeersDat(buf){
   const p = PeersDat.parse(buf);
-  return { source:'peersdat', rows:p.rows, fileRef:null, meta:p };
+  return { source:'peersdat', rows:p.rows, meta:p };
 }
 
 function activate(res, name){
   S.rows = res.rows; S.source = res.source; S.meta = res.meta; S.name = name;
-  const newest = res.rows.reduce((m,r)=>Math.max(m,r.time),0);
-  const sel=$('#refsel'); sel.innerHTML='';
-  const opts=[];
-  if(res.fileRef) opts.push(['Snapshot time (from file)', res.fileRef]);
-  opts.push(['Newest entry', newest]);
-  opts.push(['Now', Math.floor(Date.now()/1000)]);
-  for(const [label,ts] of opts){
-    const o=document.createElement('option');
-    o.value=String(ts); o.textContent=label+' — '+iso(ts); sel.appendChild(o);
-  }
-  S.ref = Number(sel.value);
+  S.ref = res.rows.reduce((m,r)=>Math.max(m,r.time),0);
+  $('#refval').textContent = iso(S.ref);
 
   const isPd = res.source==='peersdat';
-  $('#srcpill').textContent = isPd
-    ? `peers.dat · format ${res.meta.format}${res.meta.network?' · '+res.meta.network:''}`
-    : 'getrawaddrman';
   $('#card-att').classList.toggle('off', !isPd);
   $('#card-conn').classList.toggle('off', !isPd);
   $('#card-ls').classList.toggle('off', !isPd);
@@ -571,14 +672,14 @@ function columnChart(mount, series, opts){
   const W=Math.max(mount.clientWidth||720,320);
   const ML=58,MR=12,MT=10,MB=30,ph=opts.height||210,H=ph+MT+MB;
   const pw=W-ML-MR, n=series.length;
-  if(!n){ mount.innerHTML=`<p style="color:var(--muted);font-size:13px;margin:12px 0">No entries in this range.</p>`; return; }
+  if(!n){ mount.innerHTML=`<p style="color:var(--muted);font-size:15px;margin:12px 0">No entries in this range.</p>`; return; }
   const max=series.reduce((m,d)=>Math.max(m,d.v),0);
   const ticks=niceTicks(max,4), top=ticks[ticks.length-1]||1;
   const y=v=>MT+ph-(v/top)*ph, band=pw/n, bw=Math.min(24,Math.max(1,band-2));
   let g='';
   for(const t of ticks)
     g+=`<line x1="${ML}" x2="${W-MR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/>`
-     + `<text x="${ML-9}" y="${(y(t)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--muted)" style="font-variant-numeric:tabular-nums">${fmt(Math.round(t))}</text>`;
+     + `<text x="${ML-9}" y="${(y(t)+4).toFixed(1)}" text-anchor="end" font-size="12.5" fill="var(--muted)" style="font-variant-numeric:tabular-nums">${fmt(Math.round(t))}</text>`;
   g+=`<line x1="${ML}" x2="${W-MR}" y1="${MT+ph}" y2="${MT+ph}" stroke="var(--axis)" stroke-width="1"/>`;
   let bars='',hits='';
   series.forEach((d,i)=>{
@@ -590,7 +691,7 @@ function columnChart(mount, series, opts){
   const lc=Math.min(6,n); let xl='';
   for(let k=0;k<lc;k++){
     const i=lc===1?0:Math.round(k*(n-1)/(lc-1)), cx=ML+i*band+band/2;
-    xl+=`<text x="${cx.toFixed(1)}" y="${MT+ph+19}" text-anchor="middle" font-size="11" fill="var(--muted)">${series[i].label}</text>`;
+    xl+=`<text x="${cx.toFixed(1)}" y="${MT+ph+19}" text-anchor="middle" font-size="12.5" fill="var(--muted)">${series[i].label}</text>`;
   }
   mount.innerHTML=`<svg width="${W}" height="${H}" role="img" aria-label="${esc(opts.aria||'')}">${g}${bars}${xl}<g>${hits}</g></svg>`;
   mount.querySelectorAll('rect[data-i]').forEach(r=>{
@@ -607,8 +708,8 @@ function stackedBands(mount, rows2, defs){
   let out='';
   rows2.forEach((row,ri)=>{
     const yy=TOP+ri*(RH+GAP), total=row.counts.reduce((a,b)=>a+b,0)||1;
-    out+=`<text x="0" y="${yy+RH/2-3}" font-size="12.5" fill="var(--text-primary)" font-weight="600">${esc(row.name)}</text>`
-      +  `<text x="0" y="${yy+RH/2+13}" font-size="11" fill="var(--muted)" style="font-variant-numeric:tabular-nums">${fmt(total)}</text>`;
+    out+=`<text x="0" y="${yy+RH/2-3}" font-size="14.5" fill="var(--text-primary)" font-weight="600">${esc(row.name)}</text>`
+      +  `<text x="0" y="${yy+RH/2+13}" font-size="12.5" fill="var(--muted)" style="font-variant-numeric:tabular-nums">${fmt(total)}</text>`;
     let x=LB;
     row.counts.forEach((c,bi)=>{
       if(c<=0) return;
@@ -616,7 +717,7 @@ function stackedBands(mount, rows2, defs){
       if(dw>0.4){
         out+=`<rect x="${x.toFixed(2)}" y="${yy}" width="${dw.toFixed(2)}" height="${RH}" rx="3" fill="var(${defs[bi].v})" data-r="${ri}" data-b="${bi}"/>`;
         const pct=100*c/total, txt=pct.toFixed(pct<10?1:0)+'%';
-        if(dw>46) out+=`<text x="${(x+dw/2).toFixed(2)}" y="${yy+RH/2+4}" text-anchor="middle" font-size="11.5" fill="var(${bi>=3?'--on-band-dark':'--on-band-light'})" style="font-variant-numeric:tabular-nums">${txt}</text>`;
+        if(dw>46) out+=`<text x="${(x+dw/2).toFixed(2)}" y="${yy+RH/2+4}" text-anchor="middle" font-size="13" fill="var(${bi>=3?'--on-band-dark':'--on-band-light'})" style="font-variant-numeric:tabular-nums">${txt}</text>`;
       }
       x+=w;
     });
@@ -645,10 +746,10 @@ function barsH(mount, items, opts){
   let out='';
   items.forEach((d,i)=>{
     const yy=TOP+i*(RH+GAP), w=d.v>0?Math.max(2,(d.v/max)*pw):0;
-    out+=`<text x="0" y="${yy+RH/2+4}" font-size="12.5" fill="var(--text-secondary)">${esc(d.k)}</text>`;
+    out+=`<text x="0" y="${yy+RH/2+4}" font-size="14.5" fill="var(--text-secondary)">${esc(d.k)}</text>`;
     if(w>0) out+=`<path d="${rightRoundPath(LB,yy,w,RH,4)}" fill="var(--series-1)" data-i="${i}"/>`;
     else    out+=`<rect x="${LB}" y="${yy+RH/2-1}" width="2" height="2" fill="var(--axis)"/>`;
-    out+=`<text x="${(LB+w+9).toFixed(1)}" y="${yy+RH/2+4}" font-size="12" fill="var(--text-primary)" style="font-variant-numeric:tabular-nums">${fmt(d.v)}</text>`;
+    out+=`<text x="${(LB+w+9).toFixed(1)}" y="${yy+RH/2+4}" font-size="14" fill="var(--text-primary)" style="font-variant-numeric:tabular-nums">${fmt(d.v)}</text>`;
   });
   mount.innerHTML=`<svg width="${W}" height="${H}" role="img" aria-label="${esc(opts.aria||'')}">${out}</svg>`;
   mount.querySelectorAll('path[data-i]').forEach(p=>{
@@ -667,6 +768,10 @@ const LS_BANDS=[{k:'<1d',hi:1,v:'--band-1'},{k:'1–7d',hi:7,v:'--band-2'},
   {k:'7–30d',hi:30,v:'--band-3'},{k:'30–90d',hi:90,v:'--band-4'},{k:'>90d',hi:Infinity,v:'--band-5'}];
 const ATT_BANDS=[{k:'0',hi:1,v:'--band-1'},{k:'1',hi:2,v:'--band-2'},{k:'2',hi:3,v:'--band-3'},
   {k:'3–9',hi:10,v:'--band-4'},{k:'≥10',hi:Infinity,v:'--band-5'}];
+/* The chart keeps the 3–9 band so the five colours stay readable; the table under it
+   splits that band per value, since the counts there fall off steeply. */
+const ATT_TABLE_BANDS=[...Array(10).keys()].map(i=>({k:String(i),hi:i+1}))
+  .concat([{k:'≥10',hi:Infinity}]);
 const idx=(defs,x)=>{ for(let i=0;i<defs.length;i++) if(x<defs[i].hi) return i; return defs.length-1; };
 
 /* AddrInfo::IsTerrible, arm by arm. The m_last_try<=1min exemption is omitted:
@@ -730,14 +835,15 @@ function csvSplit(line){
   out.push(cur); return out;
 }
 function parseReachable(text){
-  /* Two indexes. `set` is address+port; `anySet` is address alone, needed because
-   * Core stores I2P with port 0 (that transport has no TCP port) while crawlers
-   * list those nodes on 8333 — an exact join silently drops every I2P entry. */
+  /* Indexed by address alone. The bitnod.es export lists exactly one port per address,
+   * so a port join adds nothing and drops entries Core holds on a second port — every
+   * I2P entry included, since Core stores those with port 0. `port` is still accepted
+   * from the callers below, it just is not part of the key. */
   const items=[]; let ts=null, raw=0, kept=0, dmin=null, dmax=null;
   const t=text.replace(/^﻿/,'').trim();
-  const take=(host,port,date)=>{ raw++; const k=canonKey(host,port); if(!k) return;
-    const a=canonKey(host,''); kept++;
-    items.push({k, a, d:date||null});
+  const take=(host,port,date)=>{ raw++; const a=canonKey(host,''); if(!a) return;
+    kept++;
+    items.push({a, d:date||null});
     if(date){ if(!dmin||date<dmin) dmin=date; if(!dmax||date>dmax) dmax=date; } };
   if(t[0]==='{' || t[0]==='['){
     const j=JSON.parse(t);
@@ -781,6 +887,9 @@ function parseReachable(text){
 /* ---------- ranked stacked bars (netgroups) ---------- */
 const NG_SEGS=[{k:'connected before',v:'--good'},{k:'tried, never succeeded',v:'--critical'},
                {k:'never tried',v:'--axis'}];
+/* Tried entries have all connected at least once, so NG_SEGS would be one flat colour. */
+const TRIED_SRC_SEGS=[{k:'no failures since',v:'--good'},{k:'failing since last success',v:'--critical'},
+                      {k:'unknown (needs peers.dat)',v:'--axis'}];
 function barsRankedH(mount, items, opts){
   const SEGS=(opts&&opts.segs)||NG_SEGS;
   const W=Math.max(mount.clientWidth||760,320);
@@ -794,7 +903,7 @@ function barsRankedH(mount, items, opts){
   items.forEach((d,i)=>{
     const yy=TOP+i*(RH+GAP);
     const full = opts.norm ? pw : (d.n/max)*pw;
-    out+=`<text x="0" y="${yy+RH/2+4}" font-size="12.5" fill="var(--text-secondary)">${esc(d.label)}</text>`;
+    out+=`<text x="0" y="${yy+RH/2+4}" font-size="14.5" fill="var(--text-secondary)">${esc(d.label)}</text>`;
     let x=LB;
     d.parts.forEach((c,si)=>{
       if(c<=0) return;
@@ -802,13 +911,14 @@ function barsRankedH(mount, items, opts){
       if(dw>0.4) out+=`<rect x="${x.toFixed(2)}" y="${yy}" width="${dw.toFixed(2)}" height="${RH}" rx="2" fill="var(${SEGS[si].v})" data-i="${i}" data-s="${si}"/>`;
       x+=w;
     });
-    out+=`<text x="${(LB+full+9).toFixed(1)}" y="${yy+RH/2+4}" font-size="12" fill="var(--text-primary)" style="font-variant-numeric:tabular-nums">${fmt(d.n)}  ${d.pct}</text>`;
+    const sep=(opts&&opts.sep)||'  ';
+    out+=`<text x="${(LB+full+9).toFixed(1)}" y="${yy+RH/2+4}" font-size="14" fill="var(--text-primary)" style="font-variant-numeric:tabular-nums">${fmt(d.n)}${d.pct?sep+d.pct:''}</text>`;
   });
   mount.innerHTML=`<svg width="${W}" height="${H}" role="img" aria-label="${esc(opts.aria||'')}">${out}</svg>`;
   mount.querySelectorAll('rect[data-i]').forEach(r=>{
     r.addEventListener('mousemove',e=>{
       const d=items[+r.dataset.i];
-      showTip(e,d.label,[`${fmt(d.n)} addresses · ${d.pct} of the set`].concat(
+      showTip(e,d.label,[`${fmt(d.n)} ${(opts&&opts.unit)||'addresses'}${d.pct?' · '+d.pct:''}`].concat(
         SEGS.map((sg,j)=>`${sg.k}: ${fmt(d.parts[j])} (${(100*d.parts[j]/d.n).toFixed(1)}%)`)));
     });
     r.addEventListener('mouseleave',hideTip);
@@ -968,13 +1078,38 @@ function render_(){
      with slot multiplicity living in nRefCount rather than in duplicate records.
      getrawaddrman emits one row per occupied bucket slot, so there they differ. */
   const distinct=new Set(rows.map(r=>r.address+':'+r.port)).size;
-  const hosts=new Set(rows.map(r=>r.address)).size;
+  /* Ports per address, so an address listening on 8333 and on an alternate port
+     counts once as a host but twice in `distinct`. Addrman keys on CService, so
+     those are genuinely separate entries: separate slots, separate nAttempts and
+     m_last_success, evaluated by IsTerrible() independently. */
+  /* Ports per address, each carrying its own connection state. Keyed by port so the
+     getrawaddrman path — one row per occupied slot — cannot count an address:port twice.
+     A port range that never answers is the shape address spam takes, so the state is
+     what makes this readable rather than the port count alone. */
+  const portsPerHost=new Map();
+  for(const r of rows){
+    let e=portsPerHost.get(r.address);
+    if(!e){ e=new Map(); portsPerHost.set(r.address,e); }
+    if(!e.has(r.port))
+      e.set(r.port, !isPd ? 2 : (r.last_success>0 ? 0 : (r.nattempts>0 ? 1 : 2)));
+  }
+  const hosts=portsPerHost.size;
+  const multiPort=[...portsPerHost.values()].filter(e=>e.size>1).length;
+  /* Ranked for the chart below; 3+ ports is where it stops being ordinary. */
+  const portRanked=[...portsPerHost.entries()]
+    .filter(([,e])=>e.size>2)
+    .map(([addr,e])=>{ const parts=[0,0,0];
+                       for(const st of e.values()) parts[st]++;
+                       return {addr, n:e.size, parts}; })
+    .sort((a,b)=> b.n-a.n || (a.addr<b.addr?-1:1));
   /* Mutually exclusive connection states. m_last_success>0 means we completed a
      connection at some point; nAttempts counts failures SINCE the last success
      (Good_ resets it to 0), so the three cases partition the table exactly. */
   const connOK   = isPd ? rows.filter(r=>r.last_success>0).length : 0;
   const connFail = isPd ? rows.filter(r=>r.last_success===0 && r.nattempts>0).length : 0;
   const connNone = isPd ? rows.filter(r=>r.last_success===0 && r.nattempts===0).length : 0;
+  /* Of the never-succeeded, those already past ADDRMAN_RETRIES — arm 3 of IsTerrible(). */
+  const failHard = isPd ? rows.filter(r=>r.last_success===0 && r.nattempts>=3).length : 0;
   /* Keyed by address so the two sources agree: peers.dat stores one row per address
      carrying its refcount, getrawaddrman emits one row per occupied bucket slot. */
   const refMap=new Map();
@@ -983,35 +1118,93 @@ function render_(){
   let refSlots=0;
   for(const v of refMap.values()){ refSlots+=v; refHist[Math.min(v,MAXREF)]++; }
   const multiRef=[...refMap.values()].filter(v=>v>1).length;
+  /* The same count keyed by address rather than CService: an address on two ports
+     holding one reference each aggregates to 2. Derived from refMap because that is
+     already deduplicated per address:port — summing r.refcount over rows would square
+     it on the getrawaddrman path, which emits one row per occupied slot. The key is
+     address+':'+port, so lastIndexOf splits the port off an IPv6 address correctly. */
+  const refAddrMap=new Map();
+  for(const [k,v] of refMap){
+    const a=k.slice(0,k.lastIndexOf(':'));
+    refAddrMap.set(a,(refAddrMap.get(a)||0)+v);
+  }
+  const multiRefAddr=[...refAddrMap.values()].filter(v=>v>1).length;
+  /* Source-group concentration of the tried table specifically. Tried is the half of
+     Select_ we actually dial, so a source group's grip there matters more than its
+     share of the address book. Cached on the row as _sg by the source-netgroup card. */
+  const triedSrc=new Map();
+  for(const r of rows){
+    if(r._sg===undefined){
+      const g=(typeof PeersDat!=='undefined' && r.source)
+        ? PeersDat.netGroup(r.source_network, PeersDat.addrBytes(r.source_network, r.source))
+        : null;
+      r._sg = g ? g.key : '?';
+      r._sgl = g ? g.label : '?';
+    }
+    if(r.table!=='tried') continue;
+    let e=triedSrc.get(r._sg);
+    if(!e){ e={key:r._sg, label:r._sgl, n:0, parts:[0,0,0]}; triedSrc.set(r._sg,e); }
+    e.n++;
+    /* Every tried entry connected at least once — Good_ is the only way in — so the
+       split that carries information here is whether it has failed SINCE. */
+    e.parts[!isPd ? 2 : (r.nattempts>0 ? 1 : 0)]++;
+  }
+  const triedRanked=[...triedSrc.values()].sort((a,b)=> b.n-a.n || (a.key<b.key?-1:1));
+  const triedTop = triedRanked.length ? triedRanked[0].n : 0;
+  const triedTopPct = nTried.length ? 100*triedTop/nTried.length : 0;
+  /* new is 1024 buckets x 64 positions, tried is 256 x 64 (ADDRMAN_{NEW,TRIED}_BUCKET_COUNT
+     x ADDRMAN_BUCKET_SIZE). A new entry occupies nRefCount slots, a tried entry exactly one. */
+  const NEW_SLOTS=1024*64, TRIED_SLOTS=256*64;
   const share=terrible/Math.max(rows.length,1);
   /* Bands calibrated against 117 recorded readings from the two experiment nodes
      (terrible_rate_series{,_run2}.json): the clean control node ran 0.12–3.90%
      across 58 readings, p90 3.67%. The earlier 3% cut put half of that node's
-     ordinary days in "elevated", which made the word meaningless. 4% clears
+     ordinary days in the middle band, which made the word meaningless. 4% clears
      every control reading ever taken; 8% is well above the 5.34% high-water mark
      of the deliberately poisoned test node. These are empirical, not from Core. */
-  const TERRIBLE_BANDS='Bands from this project\'s own history: healthy ≤4%, elevated 4–8%, high >8%. '
+  const TERRIBLE_BANDS='Bands from this project\'s own history: low ≤4%, mid 4–8%, high >8%. '
     + 'The control node measured 0.12–3.90% over 58 readings. Not a Bitcoin Core threshold.';
-  const st = share>0.08?['--critical','high'] : share>0.04?['--warning','elevated'] : ['--good','healthy'];
+  const st = share>0.08?['--critical','high'] : share>0.04?['--warning','mid'] : ['--good',''];
+  const TERRIBLE_SCALE='low \u22644% · mid 4\u20138% · high >8%';
+
+  const T_full = tile('Addrman full', `${(100*(refSlots+nTried.length)/(NEW_SLOTS+TRIED_SLOTS)).toFixed(1)}%`,
+    `${fmt(refSlots+nTried.length)} of ${fmt(NEW_SLOTS+TRIED_SLOTS)} slots`, null, null,
+    `new ${(100*refSlots/NEW_SLOTS).toFixed(1)}% · tried ${(100*nTried.length/TRIED_SLOTS).toFixed(1)}%`);
+  const T_empty = tile('Empty slots', `${fmt(NEW_SLOTS-refSlots)} new / ${fmt(TRIED_SLOTS-nTried.length)} tried`,
+    `of ${fmt(NEW_SLOTS)} new · ${fmt(TRIED_SLOTS)} tried`);
+  const T_nt = tile('Distinct new / tried', `${fmt(nNew.length)} new / ${fmt(nTried.length)} tried`, '');
+  const T_uap = tile('Unique address:port', fmt(distinct),
+    distinct===rows.length ? '' : `over ${fmt(rows.length)} slots`);
+  const T_mp = tile('Multiple ports', fmt(multiPort), `of ${fmt(hosts)} unique address only`, null,
+    'Addresses addrman holds on more than one port. Keys are CService, so each '
+    + 'address:port is its own entry with its own slots, nAttempts and m_last_success.');
+  const T_age = tile('Median age', median.toFixed(1)+' d', 'since last refresh');
+  const T_terr = isPd
+    ? tile('Terrible', `${(100*share).toFixed(2)}%`, `${fmt(terrible)} entries${st[1]?' · '+st[1]:''}`, st[0], TERRIBLE_BANDS, TERRIBLE_SCALE)
+    : tile('Older than 30d', `${(100*over30/Math.max(rows.length,1)).toFixed(2)}%`,
+           `${fmt(over30)} entries · horizon arm only, a lower bound`, '--warning');
+  const T_ref = tile('nRefCount > 1', fmt(multiRef), '');
+  const T_refa = tile('nRefCount > 1 by address only', fmt(multiRefAddr), '', null,
+    'Ports collapsed: references summed across every port of an address, so an '
+    + 'address on two ports with one reference each counts as 2.');
+  const T_conn = isPd ? tile('Ever connected', fmt(connOK), '')
+    : tile('Networks', String(new Set(rows.map(r=>r.network)).size),
+           [...new Set(rows.map(r=>r.network))].join(', '));
+  const T_fail = isPd ? tile('Attempted but failed', fmt(connFail), 'never a success', null,
+      'nAttempts > 0 with m_last_success = 0: dialled at least once and never once '
+      + 'succeeded. nAttempts counts failures since the last success, so an entry that '
+      + 'has ever connected reads 0 here.',
+      `${fmt(failHard)} at ${'\u2265'}3 attempts`)
+    : '';
 
   $('#kpis').innerHTML=[
-    tile('Entries', fmt(rows.length),
-         distinct===rows.length
-           ? `unique address:port · ${fmt(hosts)} distinct hosts`
-           : `${fmt(distinct)} unique address:port · ${fmt(hosts)} hosts`),
-    tile('new / tried', `${fmt(nNew.length)} / ${fmt(nTried.length)}`,
-         `${fmt(refSlots)} of 65,536 new slots filled (${(100*refSlots/65536).toFixed(1)}%)`),
-    tile('Median age', median.toFixed(1)+' d', 'since last refresh'),
-    isPd
-      ? tile('Terrible', `${(100*share).toFixed(2)}%`, `${fmt(terrible)} entries · ${st[1]}`, st[0], TERRIBLE_BANDS)
-      : tile('Older than 30d', `${(100*over30/Math.max(rows.length,1)).toFixed(2)}%`,
-             `${fmt(over30)} entries · horizon arm only, a lower bound`, '--warning'),
-    tile('nRefCount > 1', fmt(multiRef), `of ${fmt(refMap.size)} distinct new addresses`),
-    isPd ? tile('Ever connected', fmt(connOK),
-                `${fmt(connOK+connFail)} of ${fmt(rows.length)} ever attempted`)
-          : tile('Networks', String(new Set(rows.map(r=>r.network)).size),
-                 [...new Set(rows.map(r=>r.network))].join(', ')),
-  ].join('');
+    [T_full, T_empty, T_nt],
+    [T_uap, T_mp],
+    [T_age, T_terr],
+    [T_ref, T_refa],
+    [T_conn, T_fail],
+  ].map(row=>{const r=row.filter(Boolean);
+              return r.length?`<div class="kpirow">${r.join('')}</div>`:'';}).join('');
 
   /* age bands */
   const ageRows=[{name:'new',counts:count(nNew,AGE_BANDS,r=>(ref-r.time)/DAY)},
@@ -1048,9 +1241,7 @@ function render_(){
   const meanRef = refMap.size ? refSlots/refMap.size : 0;
   const topRef = refSeries.reduce((m,d,i)=>d.v>0?i+1:m, 0);
   $('#cs-ref').textContent =
-    `${fmt(refMap.size)} distinct addresses holding ${fmt(refSlots)} of 65,536 new slots `
-    + `(${(100*refSlots/65536).toFixed(1)}% full) · mean nRefCount ${meanRef.toFixed(3)}`
-    + ` · highest observed ${topRef || 0}`;
+    `mean nRefCount ${meanRef.toFixed(3)} · highest observed ${topRef || 0}`;
   columnChart($('#c-ref'), refSeries, {aria:'new-table addresses by nRefCount', pctOf:refMap.size});
   $('#t-ref').innerHTML =
     `<table><thead><tr><th>nRefCount</th><th>Addresses</th><th>% of new addresses</th><th>Slots used</th></tr></thead><tbody>`
@@ -1093,31 +1284,20 @@ function render_(){
                    {name:'tried',counts:count(nTried,ATT_BANDS,r=>r.nattempts)}];
     stackedBands($('#c-att'),attRows,ATT_BANDS);
     $('#l-att').innerHTML=legend(ATT_BANDS);
-    $('#t-att').innerHTML=bandTable(attRows,ATT_BANDS);
+    $('#t-att').innerHTML=bandTable(
+      [{name:'new',counts:count(nNew,ATT_TABLE_BANDS,r=>r.nattempts)},
+       {name:'tried',counts:count(nTried,ATT_TABLE_BANDS,r=>r.nattempts)}], ATT_TABLE_BANDS);
 
     /* last-success bands, over the connected subset only */
     const lsNew=nNew.filter(r=>r.last_success>0), lsTried=nTried.filter(r=>r.last_success>0);
     const lsAge=r=>(ref-r.last_success)/DAY;
     const lsRows=[{name:'new',counts:count(lsNew,LS_BANDS,lsAge)},
                   {name:'tried',counts:count(lsTried,LS_BANDS,lsAge)}];
-    const lsTot=lsNew.length+lsTried.length;
-    $('#cs-ls').textContent =
-      `${fmt(lsTot)} entries have ever connected (${fmt(lsNew.length)} new, ${fmt(lsTried.length)} tried)`
-      + ` · the other ${fmt(rows.length-lsTot)} have never connected and are excluded`;
     stackedBands($('#c-ls'),lsRows,LS_BANDS);
     $('#l-ls').innerHTML=legend(LS_BANDS);
     $('#t-ls').innerHTML=bandTable(lsRows,LS_BANDS);
 
     const items=REASONS.map((k,i)=>({k,v:icount[i]}));
-    const dead=REASONS.filter((k,i)=>icount[i]===0).length;
-    /* What the attempt/success arms add over the horizon arm alone — i.e. what
-       reading peers.dat buys you over a getrawaddrman dump. Often zero. */
-    const gain=terrible-over30;
-    $('#cs-terr').textContent=
-      `${fmt(terrible)} of ${fmt(rows.length)} entries (${(100*share).toFixed(2)}%) satisfy IsTerrible() at the reference time`
-      + (dead ? ` · ${dead} of the 4 arms fire for nothing in this file` : '')
-      + ` · horizon arm alone would give ${fmt(over30)} (${(100*over30/Math.max(rows.length,1)).toFixed(2)}%), so nAttempts and m_last_success add ${gain>0?'+'+fmt(gain):'nothing'}`
-      + (gain===0 ? ' — the rate is exact here rather than a lower bound.' : '.');
     barsH($('#c-terr'),items,{aria:'terrible arms',pctOf:rows.length});
     $('#t-terr').innerHTML=
       `<table><thead><tr><th>Arm</th><th>Satisfied</th><th>First match</th><th>% of all</th></tr></thead><tbody>`
@@ -1139,20 +1319,15 @@ function render_(){
                    .toISOString().slice(0,10);
       used=RC.items.filter(x=>x.d && x.d>=from);
     }
-    RC.set=new Set(); RC.anySet=new Set();
-    for(const x of used){ RC.set.add(x.k); RC.anySet.add(x.a); }
-    for(const r of rows) r._rk=undefined;
-    for(const r of rows) if(r._rk===undefined){
-      r._rk = canonKey(r.address, r.port);          /* address + port */
-      r._ra = canonKey(r.address, '');              /* address alone */
-      /* port 0 means "no TCP port" (I2P), so it cannot be matched exactly */
-      r._reach = r.port ? RC.set.has(r._rk) : RC.anySet.has(r._ra);
+    RC.anySet=new Set();
+    for(const x of used) RC.anySet.add(x.a);
+    for(const r of rows){
+      r._ra = canonKey(r.address, '');              /* address alone, port ignored */
+      r._reach = RC.anySet.has(r._ra);
     }
     const nets=[...new Set(rows.map(r=>r.network))].sort();
     const mk=list=>{ let a=0; for(const r of list) if(r._reach) a++;
                      return [a, list.length-a]; };
-    let altPort=0;
-    for(const r of rows) if(!r._reach && r.port && RC.anySet.has(r._ra)) altPort++;
     const items=[{label:'all networks', rows:rows}]
       .concat(nets.map(n=>({label:n, rows:rows.filter(r=>r.network===n)})))
       .map(o=>{ const parts=mk(o.rows);
@@ -1165,7 +1340,6 @@ function render_(){
       `${fmt(inCrawl)} of ${fmt(rows.length)} entries reachable (${(100*inCrawl/Math.max(rows.length,1)).toFixed(2)}%), against a reachable set of ${fmt(RC.anySet.size)} addresses`
       + ` · you hold ${(100*held.size/Math.max(RC.anySet.size,1)).toFixed(1)}% of that crawl`
       + (RC.ts? ` · snapshot ${iso(RC.ts)}` : '')
-      + (altPort? ` · ${fmt(altPort)} more match the address but on a different port` : '')
       + (RC.nd>1? ` · export dates ${RC.dmin} → ${RC.dmax} (${RC.nd} days)` : '');
     $('#rdatewrap').style.display = RC.nd>1 ? 'flex' : 'none';
     barsRankedH($('#c-reach'), items, {aria:'reachability by network', segs:REACH_SEGS, norm:false});
@@ -1175,11 +1349,126 @@ function render_(){
           + `<td>${fmt(d.parts[0])}</td><td>${fmt(d.parts[1])}</td>`
           + `<td>${(100*d.parts[0]/Math.max(d.n,1)).toFixed(2)}%</td></tr>`).join('')
       + `</tbody></table>`;
+    const m=/bitcoin_nodes_(\d{4}-\d{2}-\d{2})\.csv/.exec(RC.name||'');
+    $('#bitnodes-date').textContent = m ? m[1] : (RC.dmax||RC.name||'');
     $('#reach-src').textContent = 'Source: ' + (RC.name||'uploaded file')
       + (RC.fetched? ' · refreshed ' + RC.fetched : '')
       + ' · ' + fmt(RC.kept) + ' rows';
     $('#reach-load').style.display='none'; $('#reach-body').style.display='block';
   }
+
+  /* source netgroups, restricted to tried — half of every non-feeler Select_ draw
+     comes from that table, and it is 7-8x smaller than new, so a source group's grip
+     here reaches the real peer set far more than the same share of the address book. */
+  $('#cs-tsrc').textContent =
+    `${fmt(triedRanked.length)} source netgroups over ${fmt(nTried.length)} tried entries`
+    + (triedRanked.length
+        ? ` · largest announced ${fmt(triedTop)} of them (${triedTopPct.toFixed(2)}%)`
+          + ` · top 10 announced ${fmt(triedRanked.slice(0,10).reduce((a,g)=>a+g.n,0))}`
+          + ` (${(100*triedRanked.slice(0,10).reduce((a,g)=>a+g.n,0)/Math.max(nTried.length,1)).toFixed(1)}%)`
+        : '');
+  const tShown=triedRanked.slice(0,Number($('#ttop').value)||20).map(g=>({
+    label:g.label||g.key, n:g.n, parts:g.parts,
+    pct:(100*g.n/Math.max(nTried.length,1)).toFixed(2)+'%'}));
+  barsRankedH($('#c-tsrc'), tShown, {aria:'source netgroups ranked by share of tried',
+                                     segs:TRIED_SRC_SEGS, norm:$('#tnorm').checked,
+                                     unit:'tried entries', sep:', '});
+  $('#l-tsrc').innerHTML=legend(TRIED_SRC_SEGS);
+  $('#t-tsrc').innerHTML =
+    `<table><thead><tr><th>#</th><th style="text-align:left">Source netgroup</th><th>Tried entries</th><th>% of tried</th>`
+    + TRIED_SRC_SEGS.map(sg=>`<th>${sg.k}</th>`).join('') + `</tr></thead><tbody>`
+    + triedRanked.slice(0,500).map((g,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(g.label||g.key)}</td>`
+        + `<td>${fmt(g.n)}</td><td>${(100*g.n/Math.max(nTried.length,1)).toFixed(3)}%</td>`
+        + g.parts.map(v=>`<td>${fmt(v)}</td>`).join('') + `</tr>`).join('')
+    + `</tbody></table>`;
+
+  /* ---- blurb check-list verdicts ----
+     Each row is pass/fail against the threshold written in the table beside it. A check
+     the loaded source cannot answer shows a dash rather than a false cross. */
+  const verdict = (id, ok, measured) => {
+    const el = $('#'+id); if(!el) return;
+    el.innerHTML = (ok===null ? '<span style="color:var(--muted)">\u2014</span>'
+                              : ok ? '\u2705' : '\u274c')
+                 + `<span class="m">${esc(measured)}</span>`;
+  };
+
+  verdict('v-r1', isPd ? connOK > connFail : null,
+          isPd ? `${fmt(connOK)} vs ${fmt(connFail)}` : 'needs peers.dat');
+
+  /* bitnod.es carries no I2P or CJDNS rows, so those networks are left out of the
+     ratio entirely rather than counted as unreachable. */
+  let rTot=0, rHit=0;
+  if(S.reach) for(const r of rows)
+    if(r.network==='ipv4' || r.network==='ipv6' || r.network==='onion'){
+      rTot++; if(r._reach) rHit++;
+    }
+  const rPct = rTot ? 100*rHit/rTot : 0;
+  verdict('v-r2', S.reach && rTot ? rPct > 30 : null,
+          S.reach && rTot ? `${rPct.toFixed(2)}% of ${fmt(rTot)}` : 'no crawl loaded');
+
+  let over5=0;
+  for(const e of portsPerHost.values()) if(e.size>5) over5++;
+  verdict('v-e1', over5 < 50, `${fmt(over5)} such IPs`);
+
+  let refClear=0; const seenRC=new Set();
+  for(const r of rows) if(r.table==='new' && (r.network==='ipv4'||r.network==='ipv6') && r.refcount>1){
+    const k=r.address+':'+r.port; if(!seenRC.has(k)){ seenRC.add(k); refClear++; }
+  }
+  verdict('v-e2', refClear < 100, `${fmt(refClear)} addresses`);
+
+  /* Lift: a netgroup's connect rate against the table-wide connect rate, so a group is
+     not flagged for its size alone. An earlier version took min(dial ratio, connect ratio)
+     against the medians — but dial share cannot exceed 1 while the median dial share was
+     already 42%, capping the result at 2.4x and making the test unfailable. Lift has a
+     ceiling too (1 / base rate), so the threshold has to sit well under it. */
+  const ngBase = rows.length ? connOK/rows.length : 0;
+  const ngUse=new Map();
+  for(const r of rows){
+    let e=ngUse.get(r.group); if(!e){ e={n:0,att:0,con:0}; ngUse.set(r.group,e); }
+    e.n++;
+    if(r.last_success>0){ e.con++; e.att++; } else if(r.nattempts>0) e.att++;
+  }
+  const NG_MIN=20, NG_LIFT=5;
+  const bigNg=[...ngUse.values()].filter(e=>e.n>=NG_MIN);
+  let ngWorst=0, ngOver=0;
+  if(ngBase>0) for(const e of bigNg){
+    const lift=(e.con/e.n)/ngBase;
+    if(lift>ngWorst) ngWorst=lift;
+    if(lift>=NG_LIFT) ngOver++;
+  }
+  verdict('v-e3', isPd && bigNg.length && ngBase>0 ? ngWorst < NG_LIFT : null,
+          isPd && bigNg.length && ngBase>0
+            ? `worst ${ngWorst.toFixed(1)}\u00d7 \u00b7 ${fmt(ngOver)} group${ngOver===1?'':'s'} \u2265${NG_LIFT}\u00d7`
+            : 'needs peers.dat');
+
+  const tTop = triedRanked[0];
+  const tShare = (tTop && nTried.length) ? 100*tTop.n/nTried.length : 0;
+  verdict('v-e4', tTop ? tShare < 10 : null,
+          tTop ? `${tShare.toFixed(2)}% of tried` : 'no tried entries');
+
+  verdict('v-t1', isPd ? share <= 0.10 : null,
+          isPd ? `${(100*share).toFixed(2)}%` : 'needs peers.dat');
+
+  verdict('v-t2', median >= 3 && median <= 30, `${median.toFixed(1)} days`);
+
+  /* addresses on many ports */
+  $('#cs-ports').textContent = portRanked.length
+    ? `${fmt(portRanked.length)} addresses on more than 2 ports`
+      + ` · widest is ${portRanked[0].addr} on ${fmt(portRanked[0].n)} ports`
+      + (isPd ? `, ${fmt(portRanked[0].parts[0])} of which ever connected` : '')
+    : 'No address is held on more than 2 ports.';
+  const pShown=portRanked.slice(0,Number($('#ptop').value)||10).map(d=>({
+    label:d.addr, n:d.n, parts:d.parts,
+    pct:isPd ? `${fmt(d.parts[0])} connected` : ''}));
+  barsRankedH($('#c-ports'), pShown, {aria:'addresses ranked by port count',
+                                      segs:NG_SEGS, norm:false, unit:'ports', sep:', '});
+  $('#l-ports').innerHTML=legend(NG_SEGS);
+  $('#t-ports').innerHTML =
+    `<table><thead><tr><th>#</th><th style="text-align:left">Address</th><th>Ports</th>`
+    + NG_SEGS.map(sg=>`<th>${sg.k}</th>`).join('') + `</tr></thead><tbody>`
+    + portRanked.slice(0,500).map((d,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(d.addr)}</td>`
+        + `<td>${fmt(d.n)}</td>` + d.parts.map(v=>`<td>${fmt(v)}</td>`).join('') + `</tr>`).join('')
+    + `</tbody></table>`;
 
   /* netgroups — NetGroupManager::GetGroup, the unit addrman buckets on */
   const glabels=(S.meta && S.meta.groupLabels) || new Map();
@@ -1206,36 +1495,101 @@ function render_(){
     pct:(100*g.n/gTot).toFixed(2)+'%', parts:g.parts}));
   const ngSegs = NG_SEGS;
   $('#cs-ng').textContent =
-    `${fmt(ranked.length)} distinct netgroups over ${fmt(gTot)} addresses`
-    + ` · mean ${(gTot/Math.max(ranked.length,1)).toFixed(1)} per group`
-    + (ranked.length ? ` · largest ${(100*ranked[0].n/gTot).toFixed(2)}%, top 10 hold ${(100*top10/gTot).toFixed(1)}%` : '');
+    `${fmt(ranked.length)} distinct netgroups over ${fmt(gTot)} entries`
+    + ` · mean ${(gTot/Math.max(ranked.length,1)).toFixed(1)} entries per netgroup`
+    + (ranked.length
+        ? ` · largest netgroup holds ${fmt(ranked[0].n)} entries (${(100*ranked[0].n/gTot).toFixed(2)}% of all)`
+          + ` · top 10 netgroups hold ${fmt(top10)} entries (${(100*top10/gTot).toFixed(1)}%)`
+        : '');
   barsRankedH($('#c-ng'), shown, {aria:'netgroups ranked by address count',
                                   segs:ngSegs, norm:$('#gnorm').checked});
   $('#l-ng').innerHTML=legend(ngSegs);
   const gCap=Math.min(ranked.length,500);
   $('#t-ng').innerHTML =
-    `<table><thead><tr><th>#</th><th style="text-align:left">Netgroup</th><th>Addresses</th><th>% of set</th>`
+    (isPd && ngBase>0
+      ? `<p style="color:var(--text-secondary);font-size:14.5px;margin:0 0 10px">`
+        + `<b>Lift</b> compares a netgroup's connect rate with the ${(100*ngBase).toFixed(1)}% table-wide rate — `
+        + `2× means an address in that netgroup is twice as likely to have connected as a typical one. `
+        + `100% connected is the most any netgroup can manage, so lift cannot exceed `
+        + `${(1/ngBase).toFixed(1)}× on this file.</p>`
+      : '')
+    + `<table><thead><tr><th>#</th><th style="text-align:left">Netgroup</th><th>Addresses</th><th>% of set</th>`
     + ngSegs.map(sg=>`<th>${esc(sg.k)}</th>`).join('')
-    + `<th>% ${esc(ngSegs[0].k)}</th></tr></thead><tbody>`
-    + ranked.slice(0,gCap).map((g,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(glabels.get(g.key)||g.key)}</td>`
+    + `<th>% dialled</th><th>% connected</th><th>Lift</th></tr></thead><tbody>`
+    + ranked.slice(0,gCap).map((g,i)=>{
+        const dial=(g.parts[0]+g.parts[1])/g.n, conn=g.parts[0]/g.n;
+        return `<tr><td>${i+1}</td><td style="text-align:left">${esc(glabels.get(g.key)||g.key)}</td>`
         + `<td>${fmt(g.n)}</td><td>${(100*g.n/gTot).toFixed(3)}%</td>`
         + ngSegs.map((sg,j)=>`<td>${fmt(g.parts[j]||0)}</td>`).join('')
-        + `<td>${(100*g.parts[0]/g.n).toFixed(1)}%</td></tr>`).join('')
+        + (isPd
+            ? `<td>${(100*dial).toFixed(1)}%</td><td>${(100*conn).toFixed(1)}%</td>`
+              + `<td>${ngBase>0?(conn/ngBase).toFixed(2)+'\u00d7':'\u2014'}</td>`
+            : `<td>\u2014</td><td>\u2014</td><td>\u2014</td>`)
+        + `</tr>`;}).join('')
     + `</tbody></table>`
-    + (ranked.length>gCap?`<p style="color:var(--muted);font-size:12.5px;margin:8px 0 0">Showing the first ${fmt(gCap)} of ${fmt(ranked.length)} groups.</p>`:'');
-  $('#ng-note').innerHTML = (isPd
-      ? '<b>Connected before</b> is <code>m_last_success &gt; 0</code>; <b>tried, never succeeded</b> '
-        + 'is <code>nAttempts &gt; 0</code> with no success; <b>never tried</b> is neither. Most of any '
-        + 'addrman is never tried — you only dial a handful of the addresses you hold — so treat the '
-        + 'grey as "unknown", not as "unreachable".'
-      : 'Reachability needs <code>nAttempts</code> and <code>m_last_success</code>, which '
-        + '<code>getrawaddrman</code> does not expose — every group reads as untried here. Load a '
-        + '<code>peers.dat</code> to split the bars.')
-    + ' Groups are <code>GetGroup()</code> with no asmap: IPv4 /16, IPv6 /32 (he.net /36), '
-    + 'Tor and I2P just <b>4 bits</b> — 16 groups each, which is why they top the ranking — and CJDNS 12 bits. '
-    + 'This is the unit addrman buckets on, so a group\'s share is its share of the bucket space it can occupy.';
+    + (ranked.length>gCap?`<p style="color:var(--muted);font-size:14.5px;margin:8px 0 0">Showing the first ${fmt(gCap)} of ${fmt(ranked.length)} groups.</p>`:'');
+  /* Only the getrawaddrman caveat is left; the peers.dat path renders no note, so the
+     empty paragraph is hidden rather than left as a bare left border. */
+  $('#ng-note').innerHTML = isPd ? ''
+    : 'Reachability needs <code>nAttempts</code> and <code>m_last_success</code>, which '
+      + '<code>getrawaddrman</code> does not expose — every group reads as untried here. Load a '
+      + '<code>peers.dat</code> to split the bars.';
+  $('#ng-note').style.display = isPd ? 'none' : '';
 
-  /* slot map */
+  /* Source netgroups. r.source is the peer that announced the address, and
+     GetNewBucket keys the new bucket on the SOURCE's group, so concentration here
+     bounds how much of the new table one relaying operator can reach. Grouped with
+     the same GetGroup() as the address side; the group is computed lazily and cached
+     on the row, since a source repeats across thousands of entries. */
+  const smap=new Map(), slabels=new Map();
+  for(const r of rows){
+    if(r._sg===undefined){
+      const g=(typeof PeersDat!=='undefined' && r.source)
+        ? PeersDat.netGroup(r.source_network, PeersDat.addrBytes(r.source_network, r.source))
+        : null;
+      r._sg = g ? g.key : '?';
+      if(g && !slabels.has(g.key)) slabels.set(g.key, g.label);
+    }
+    let e=smap.get(r._sg);
+    if(!e){ e={key:r._sg, n:0, parts:[0,0,0], groups:new Set()}; smap.set(r._sg,e); }
+    e.n++;
+    /* How far the announcements spread: a raw count says nothing about whether a
+       source is relaying the network at large or stuffing a handful of groups. */
+    e.groups.add(r.group);
+    if(!isPd)                 e.parts[2]++;
+    else if(r.last_success>0) e.parts[0]++;
+    else if(r.nattempts>0)    e.parts[1]++;
+    else                      e.parts[2]++;
+  }
+  const sranked=[...smap.values()].sort((a,b)=> b.n-a.n || (a.key<b.key?-1:1));
+  const sTot=rows.length||1;
+  const sTop10=sranked.slice(0,10).reduce((a,g)=>a+g.n,0);
+  $('#cs-src').textContent =
+    `${fmt(sranked.length)} distinct source netgroups over ${fmt(sTot)} entries`
+    + (sranked.length
+        ? ` · largest source netgroup announced ${fmt(sranked[0].n)} entries (${(100*sranked[0].n/sTot).toFixed(2)}% of all)`
+          + ` spread over ${fmt(sranked[0].groups.size)} address netgroups`
+          + ` · top 10 announced ${fmt(sTop10)} entries (${(100*sTop10/sTot).toFixed(1)}%)`
+        : '');
+  const sShown=sranked.slice(0,Number($('#stop').value)||20).map(g=>({
+    label: slabels.get(g.key)||g.key, n:g.n,
+    pct:(100*g.n/sTot).toFixed(2)+'%', parts:g.parts}));
+  barsRankedH($('#c-src'), sShown, {aria:'source netgroups ranked by entries announced',
+                                    segs:NG_SEGS, norm:$('#snorm').checked});
+  $('#l-src').innerHTML=legend(NG_SEGS);
+  const sCap=Math.min(sranked.length,500);
+  $('#t-src').innerHTML =
+    `<table><thead><tr><th>#</th><th style="text-align:left">Source netgroup</th><th>Entries</th><th>% of all</th>`
+    + `<th>Address netgroups</th>` + NG_SEGS.map(sg=>`<th>${sg.k}</th>`).join('') + `</tr></thead><tbody>`
+    + sranked.slice(0,sCap).map((g,i)=>`<tr><td>${i+1}</td><td style="text-align:left">${esc(slabels.get(g.key)||g.key)}</td>`
+        + `<td>${fmt(g.n)}</td><td>${(100*g.n/sTot).toFixed(3)}%</td><td>${fmt(g.groups.size)}</td>`
+        + NG_SEGS.map((sg,j)=>`<td>${fmt(g.parts[j]||0)}</td>`).join('') + `</tr>`).join('')
+    + `</tbody></table>`
+    + (sranked.length>sCap?`<p style="color:var(--muted);font-size:14.5px;margin:8px 0 0">Showing the first ${fmt(sCap)} of ${fmt(sranked.length)} source netgroups.</p>`:'');
+
+  /* slot map — commented out with the markup above; flip to true to restore */
+  const SLOT_MAP=false;
+  if(SLOT_MAP){
   const sm=buildSlots(rows, S.meta, isPd);
   const staleLib = isPd && (typeof PeersDat==='undefined'
                          || typeof PeersDat.bucketPosition!=='function');
@@ -1274,30 +1628,9 @@ function render_(){
         + `<td>${r.refcount===null?'—':r.refcount}</td>`
         + `<td style="text-align:left;white-space:normal">${esc(armsOf(r,ref,isPd).map((b,j)=>b?ARMS[j]:null).filter(Boolean).join('; '))}</td></tr>`).join('')
     + `</tbody></table>`
-    + (terrible>badList.length?`<p style="color:var(--muted);font-size:12.5px;margin:8px 0 0">Showing the first ${fmt(badList.length)} of ${fmt(terrible)} terrible entries.</p>`:'');
+    + (terrible>badList.length?`<p style="color:var(--muted);font-size:14.5px;margin:8px 0 0">Showing the first ${fmt(badList.length)} of ${fmt(terrible)} terrible entries.</p>`:'');
+  }
 
-  /* derivability, relative to the loaded source */
-  const Y=['yes','--good'], D=['derivable','--warning'], N=['no','--muted'], P=['peers.dat only','--serious'];
-  const table=[
-    ['nTime',Y,'Last refresh, not arrival; relayed entries carry a −2h penalty'],
-    ['network',Y,'ipv4 / ipv6 / onion / i2p / cjdns'],
-    ['source',Y,'One relay hop — not the origin, except when source == address'],
-    ['services',Y,'Service-flag bitfield as advertised'],
-    ['netgroup',D,'/16 for IPv4, /32 for IPv6 — computed from the address'],
-    ['nRefCount', isPd?Y:D, isPd?'Recovered from the bucket table at the end of the file'
-                                :'Counted from repeated bucket/position keys'],
-    ['nAttempts', isPd?Y:P, isPd?'Read directly from the file':'Absent from getrawaddrman'],
-    ['m_last_success', isPd?Y:P, isPd?'Read directly — closes the last two IsTerrible() arms'
-                                     :'Absent from getrawaddrman'],
-    ['nKey', isPd?Y:P, isPd?'Present — lets you recompute bucket placement, with or without an asmap'
-                           :'Absent from getrawaddrman'],
-    ['ASN',N,'Needs an asmap file; not in either source'],
-    ['m_last_try',N,'Memory-only, never serialized; gates only a 1-minute exemption'],
-    ['reachability',N,'A live connection property, not a stored one'],
-  ];
-  $('#deriv').innerHTML=table.map(([a,[lbl,col],c])=>
-    `<tr><td>${esc(a)}</td><td style="text-align:left"><span class="sdot" style="display:inline-block;background:var(${col});margin-right:7px"></span>${esc(lbl)}</td>`
-   +`<td style="text-align:left;white-space:normal;color:var(--text-secondary)">${esc(c)}</td></tr>`).join('');
 }
 
 const count=(list,defs,f)=>{const c=new Array(defs.length).fill(0); for(const r of list) c[idx(defs,f(r))]++; return c;};
@@ -1308,14 +1641,14 @@ function bandTable(rows2,defs){
         return `<tr><td>${r.name}</td>${r.counts.map(c=>`<td>${fmt(c)}</td>`).join('')}<td>${fmt(t)}</td></tr>`;}).join('')
     + `</tbody></table>`;
 }
-function tile(k,v,n,sv,titleAttr){
+function tile(k,v,n,sv,titleAttr,foot){
   return `<div class="tile"${titleAttr?` title="${esc(titleAttr)}"`:''}><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`
-       + `<div class="n">${sv?`<span class="sdot" style="background:var(${sv})"></span>`:''}${esc(n)}</div></div>`;
+       + `${n||sv?`<div class="n">${sv?`<span class="sdot" style="background:var(${sv})"></span>`:''}${esc(n||'')}</div>`:''}`
+       + `${foot?`<div class="f">${esc(foot)}</div>`:''}</div>`;
 }
 
 
 /* ---------- wiring ---------- */
-$('#refsel').addEventListener('change',e=>{S.ref=Number(e.target.value); render();});
 $('#reset').addEventListener('click',()=>{
   $('#main').style.display='none'; $('#drop').style.display='block';
   $('#err').style.display='none'; $('#file').value='';
@@ -1353,18 +1686,25 @@ function repaintMap(){
 ['#gnet','#gtop'].forEach(sel=>$(sel).addEventListener('change',()=>{ if(S.rows.length) render(); }));
 $('#gnorm').addEventListener('change',()=>{ if(S.rows.length) render(); });
 $('#rdate').addEventListener('change',()=>{ if(S.rows.length&&S.reach) render(); });
+$('#stop').addEventListener('change',()=>{ if(S.rows.length) render(); });
+$('#ptop').addEventListener('change',()=>{ if(S.rows.length) render(); });
+$('#ttop').addEventListener('change',()=>{ if(S.rows.length) render(); });
+$('#tnorm').addEventListener('change',()=>{ if(S.rows.length) render(); });
+$('#snorm').addEventListener('change',()=>{ if(S.rows.length) render(); });
 $('#rfile').addEventListener('change', async e=>{
   const f=e.target.files[0]; if(!f) return;
   const er=$('#rerr'); er.style.display='none';
   try{
     S.reach=parseReachable(await decodeText(await f.arrayBuffer(), f.name));
     S.reach.name=f.name;
-    for(const r of S.rows) delete r._rk;
+    for(const r of S.rows) delete r._ra;
     render();
   }catch(ex){ er.textContent=ex&&ex.message?ex.message:String(ex); er.style.display='inline'; }
 });
+/* slot map controls are commented out with its markup
 $('#dimok').addEventListener('change',repaintMap);
 $('#zoom').addEventListener('change',repaintMap);
+*/
 
 /* hover any slot -> everything known about that entry */
 function attachMap(sel, which){

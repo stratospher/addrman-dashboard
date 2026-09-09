@@ -369,7 +369,158 @@
     };
   }
 
+
+  /* ---------- addrman bucket selection ----------
+   * AddrInfo::GetTriedBucket and AddrInfo::GetBucketPosition, src/addrman.cpp.
+   * peers.dat stores no tried bucketing at all and no slot index for new, so Core
+   * recomputes both on load; this reproduces that.
+   *
+   *   GetTriedBucket:   h1 = H(nKey, GetKey())
+   *                     h2 = H(nKey, GetGroup(), h1 % ADDRMAN_TRIED_BUCKETS_PER_GROUP)
+   *                     return h2 % ADDRMAN_TRIED_BUCKET_COUNT
+   *   GetBucketPosition: h  = H(nKey, 'N'|'K', bucket, GetKey())
+   *                     return h % ADDRMAN_BUCKET_SIZE
+   *
+   * H is HashWriter — double SHA-256 — and GetCheapHash() is ReadLE64 of the digest.
+   * Every modulus here is a power of two, so only the low bytes of the digest matter
+   * and no 64-bit arithmetic is needed. */
+
+  var K256 = new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+
+  function sha256(msg) {
+    var H = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,
+                             0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    var ml = msg.length, withPad = ((ml + 9 + 63) >> 6) << 6;
+    var m = new Uint8Array(withPad);
+    m.set(msg, 0); m[ml] = 0x80;
+    var bits = ml * 8;
+    /* length is 64-bit big-endian; inputs here are far under 2^32 bits */
+    m[withPad - 4] = (bits >>> 24) & 255; m[withPad - 3] = (bits >>> 16) & 255;
+    m[withPad - 2] = (bits >>> 8) & 255;  m[withPad - 1] = bits & 255;
+    var w = new Uint32Array(64);
+    for (var off = 0; off < withPad; off += 64) {
+      for (var i = 0; i < 16; i++)
+        w[i] = (m[off+4*i] << 24) | (m[off+4*i+1] << 16) | (m[off+4*i+2] << 8) | m[off+4*i+3];
+      for (i = 16; i < 64; i++) {
+        var g0 = w[i-15], g1 = w[i-2];
+        var s0 = ((g0 >>> 7) | (g0 << 25)) ^ ((g0 >>> 18) | (g0 << 14)) ^ (g0 >>> 3);
+        var s1 = ((g1 >>> 17) | (g1 << 15)) ^ ((g1 >>> 19) | (g1 << 13)) ^ (g1 >>> 10);
+        w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+      }
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for (i = 0; i < 64; i++) {
+        var S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+        var ch = (e & f) ^ (~e & g);
+        var t1 = (h + S1 + ch + K256[i] + w[i]) >>> 0;
+        var S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+        var mj = (a & b) ^ (a & c) ^ (b & c);
+        var t2 = (S0 + mj) >>> 0;
+        h=g; g=f; f=e; e=(d + t1) >>> 0; d=c; c=b; b=a; a=(t1 + t2) >>> 0;
+      }
+      H[0]=(H[0]+a)>>>0; H[1]=(H[1]+b)>>>0; H[2]=(H[2]+c)>>>0; H[3]=(H[3]+d)>>>0;
+      H[4]=(H[4]+e)>>>0; H[5]=(H[5]+f)>>>0; H[6]=(H[6]+g)>>>0; H[7]=(H[7]+h)>>>0;
+    }
+    var out = new Uint8Array(32);
+    for (i = 0; i < 8; i++) {
+      out[4*i]   = (H[i] >>> 24) & 255; out[4*i+1] = (H[i] >>> 16) & 255;
+      out[4*i+2] = (H[i] >>> 8) & 255;  out[4*i+3] = H[i] & 255;
+    }
+    return out;
+  }
+  function hash256(b) { return sha256(sha256(b)); }
+
+  /* Just enough of Core's serialization for these two hashes. */
+  function ser() {
+    var buf = [];
+    var self = {
+      raw: function (b) { for (var i = 0; i < b.length; i++) buf.push(b[i]); return self; },
+      u8:  function (v) { buf.push(v & 255); return self; },
+      i32: function (v) { for (var i = 0; i < 4; i++) buf.push((v >>> (8 * i)) & 255); return self; },
+      /* uint64 little-endian; every value passed here is small */
+      u64: function (v) { for (var i = 0; i < 4; i++) buf.push((v >>> (8 * i)) & 255);
+                          for (i = 0; i < 4; i++) buf.push(0); return self; },
+      /* CompactSize-prefixed vector; the two vectors hashed here are always < 253 bytes */
+      vec: function (b) { buf.push(b.length); return self.raw(b); },
+      out: function () { return new Uint8Array(buf); }
+    };
+    return self;
+  }
+
+  function keyBytes(nKey) {
+    if (nKey && nKey.length === 32 && typeof nKey !== 'string') return nKey;
+    if (typeof nKey !== 'string' || nKey.length !== 64) return null;
+    var o = new Uint8Array(32);
+    for (var i = 0; i < 32; i++) o[i] = parseInt(nKey.substr(2 * i, 2), 16);
+    return o;
+  }
+
+  /* NetGroupManager::GetGroup with no asmap, as raw bytes. netGroup() above returns
+   * the same grouping as a display key; this returns what actually gets hashed. */
+  function groupBytes(network, b) {
+    if (!b || !b.length) return null;
+    if (network === 'ipv4' && b.length === 4) return new Uint8Array([1, b[0], b[1]]);
+    if ((network === 'ipv6' || network === 'cjdns') && b.length === 16) {
+      if (network === 'cjdns') return new Uint8Array([5, b[0], b[1] | 0x0f]);
+      var li = linkedIPv4(b);
+      if (li) return new Uint8Array([1, li[0], li[1]]);
+      if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x04 && b[3] === 0x70)   /* he.net /36 */
+        return new Uint8Array([2, b[0], b[1], b[2], b[3], b[4] | 0x0f]);
+      return new Uint8Array([2, b[0], b[1], b[2], b[3]]);                     /* /32 */
+    }
+    if (network === 'onion' && b.length === 32) return new Uint8Array([3, b[0] | 0x0f]);
+    if (network === 'i2p'   && b.length === 32) return new Uint8Array([4, b[0] | 0x0f]);
+    return null;
+  }
+
+  /* CService::GetKey — GetAddrBytes() with the port appended big-endian.
+   * GetAddrBytes() is NOT the raw address: for the v1-compatible networks it returns
+   * the 16-byte v1 serialization, so an IPv4 address is hashed as ::ffff:a.b.c.d, 18
+   * bytes in total rather than 6. IPv6 and CJDNS are 16 either way; onion v3 and I2P
+   * are not v1-compatible and stay at their raw 32. */
+  var IPV4_IN_IPV6_PREFIX = [0,0,0,0,0,0,0,0,0,0,0xFF,0xFF];
+  function serviceKey(network, b, port) {
+    var addr = b;
+    if (network === 'ipv4' && b.length === 4) {
+      addr = new Uint8Array(16);
+      addr.set(IPV4_IN_IPV6_PREFIX, 0);
+      addr.set(b, 12);
+    }
+    var k = new Uint8Array(addr.length + 2);
+    k.set(addr, 0);
+    k[addr.length] = (port >> 8) & 255;
+    k[addr.length + 1] = port & 255;
+    return k;
+  }
+
+  var TRIED_BUCKETS_PER_GROUP = 8, TRIED_BUCKET_COUNT = 256, BUCKET_SIZE = 64;
+
+  function triedBucket(nKey, network, b, port) {
+    var key = keyBytes(nKey), g = groupBytes(network, b);
+    if (!key || !g) return -1;
+    var h1 = hash256(ser().raw(key).vec(serviceKey(network, b, port)).out());
+    var h2 = hash256(ser().raw(key).vec(g).u64(h1[0] % TRIED_BUCKETS_PER_GROUP).out());
+    return h2[0] % TRIED_BUCKET_COUNT;              /* both moduli are powers of two */
+  }
+
+  function bucketPosition(nKey, fNew, bucket, network, b, port) {
+    var key = keyBytes(nKey);
+    if (!key || !b || !b.length) return -1;
+    var h = hash256(ser().raw(key).u8(fNew ? 0x4e : 0x4b)      /* 'N' : 'K' */
+                          .i32(bucket).vec(serviceKey(network, b, port)).out());
+    return h[0] % BUCKET_SIZE;
+  }
+
   root.PeersDat = { parse: parsePeersDat, sha3_256: sha3_256, base32: base32,
                     ipv6: ipv6, onionV3: onionV3,
-                    netGroup: netGroup, addrBytes: addrBytes };
+                    netGroup: netGroup, addrBytes: addrBytes,
+                    sha256: sha256, hash256: hash256, groupBytes: groupBytes,
+                    triedBucket: triedBucket, bucketPosition: bucketPosition };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
