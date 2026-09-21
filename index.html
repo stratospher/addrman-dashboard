@@ -90,6 +90,19 @@
   .tile .v{font-size:31px;line-height:1.15;margin-top:7px;letter-spacing:-0.02em}
   .tile .n{font-size:14.5px;color:var(--text-secondary);margin-top:5px;display:flex;align-items:center;gap:6px}
   .tile .f{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45}
+  /* one tile holding two related counts, divided by a rule rather than split into
+     two cards: the outer box keeps the same footprint as any other tile. */
+  .tile.split{padding:0}
+  .tile.split>.srow{display:flex;align-items:stretch}
+  .tile.split>.srow>div{flex:1 1 0;min-width:0;padding:15px 17px}
+  .tile.split>.srow>div+div{border-left:1px solid var(--border)}
+  /* footer sits under both halves, so a shared scale or band reads once, not twice */
+  .tile.split>.f{display:flex;align-items:center;gap:6px;margin-top:0;padding:0 17px 14px}
+  /* too narrow for two columns of 31px figures: stack them, rule turns horizontal */
+  @media (max-width:640px){
+    .tile.split>.srow{flex-direction:column}
+    .tile.split>.srow>div+div{border-left:0;border-top:1px solid var(--border)}
+  }
   .sdot{width:8px;height:8px;border-radius:50%;flex:none}
 
   .card{background:var(--surface-1);border:1px solid var(--border);border-radius:10px;
@@ -132,6 +145,8 @@
   .intro h4{font-size:18px;letter-spacing:-0.01em;color:var(--text-primary);
             font-weight:600;margin:26px 0 10px}
   .intro .corr{color:var(--muted)}
+  /* one-line framing under a section heading, above that section's check table */
+  .intro p.lede{font-size:15px;color:var(--muted);margin:-2px 0 10px}
   table.checks{border-collapse:collapse;width:100%;margin:10px 0 26px;font-size:15px}
   table.checks td{border:1px solid var(--border);padding:11px 13px;text-align:left;
                   white-space:normal;vertical-align:top;color:var(--text-secondary)}
@@ -230,11 +245,21 @@
     <div id="kpis"></div>
 
     <div class="intro">
-      <p>Addrman health can be thought of as a combination of 3 aspects of the IP addresses inside the addrman: <b>reachability health</b> +
+      <p>Addrman health can be thought of as a combination of 3 aspects of all addresses inside addrman: <b>reachability health</b> +
         <b>eclipse resistance health</b> + the <b>ability to evict addresses</b> from addrman
-        (<code>IsTerrible</code>: only if we evict stale IP addresses can we insert newer ones).</p>
+        <b>without unfairly evicting, or mass evicting, addresses that could still become useful</b>.
+        Eviction (<code>IsTerrible</code>: only if we evict stale IP addresses can we insert newer
+        ones) cuts both ways: too little and the tables silt up with stale gossip and nothing new
+        gets in, too much and we throw away peers that were merely offline for a while — and an
+        attacker who can push our own addresses over the <code>IsTerrible</code> line gets us to
+        clear the way for theirs. Ideally what we want here should be a steady trickle and not a
+        flood.</p>
 
       <h4>1. Reachability health</h4>
+      <p class="lede">The more reachable addresses we hold, the more of our connection attempts
+        succeed. The more unreachable ones we hold, the fewer &mdash; attempts get spent on
+        addresses that will never answer. The two checks below ask that from both sides: our own
+        connection history, and a third party's view of the same addresses.</p>
       <table class="checks">
         <tbody>
           <tr>
@@ -254,6 +279,11 @@
       </table>
 
       <h4>2. Eclipse resistance health</h4>
+      <p class="lede">No single entity should dominate who we end up connecting to. An eclipse
+        attack doesn't need to break anything &mdash; if enough of the addresses we hold belong to
+        one party, every connection we make lands back on them. The checks below look for one party
+        holding too large a share of our addresses (addrman counts everything in the same /16 as
+        one party).</p>
       <table class="checks">
         <tbody>
           <tr>
@@ -281,7 +311,12 @@
         </tbody>
       </table>
 
-      <h4>3. Ability to evict addresses from addrman</h4>
+      <h4>3. Ability to evict addresses from addrman &mdash; without over-evicting</h4>
+      <p class="lede">Addrman is a fixed size, so nothing new gets in unless something old goes out.
+        We want that happening steadily: evict too little and the tables fill up with addresses that
+        stopped answering long ago, evict too much and we lose peers that were only offline for a
+        while. The checks below look at how much of addrman is evictable right now, and how fresh
+        the addresses are overall.</p>
       <table class="checks">
         <tbody>
           <tr>
@@ -634,6 +669,20 @@ function activate(res, name){
 
 /* ---------- helpers ---------- */
 const iso = ts => new Date(ts*1000).toISOString().replace('T',' ').slice(0,16)+'Z';
+/* A median age is read for its order of magnitude, not its third digit: "10 days"
+   answers "is this stale?" where "9.8 d" just asks to be divided. Whole units only,
+   stepping up as soon as the smaller one stops being legible. Null for an empty table. */
+function humanAge(d){
+  if(d===null||d===undefined||!isFinite(d)) return '\u2014';
+  const plural=(n,u)=>`${n} ${u}${n===1?'':'s'}`;
+  /* Round first, then test the ceiling, so 1.99 d reads "2 days" and not "48 hours". */
+  const mi=Math.round(d*1440);   if(mi<1)  return 'under a minute';
+  if(mi<60) return plural(mi,'minute');
+  const hr=Math.round(d*24);     if(hr<48) return plural(hr,'hour');
+  const dy=Math.round(d);        if(dy<60) return plural(dy,'day');
+  const mo=Math.round(d/30.44);  if(mo<12) return plural(mo,'month');
+  return plural(Math.round(d/365.25),'year');
+}
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function niceTicks(max,count){
   if(max<=0) return [0,1];
@@ -1061,17 +1110,24 @@ function render_(){
   const REASONS=ARMS;
   const rcount=[0,0,0,0];   /* first matching arm — these sum to the total */
   const icount=[0,0,0,0];   /* satisfied independently — an entry may hit several */
-  let terrible=0;
+  let terrible=0, terrNew=0, terrTried=0;
   const isBad=new Uint8Array(rows.length);
   for(let ri=0; ri<rows.length; ri++){
     const arm=armsOf(rows[ri], ref, isPd);
     let hit=-1;
     for(let i=0;i<4;i++) if(arm[i]){ icount[i]++; if(hit<0) hit=i; }
-    if(hit>=0){ rcount[hit]++; terrible++; isBad[ri]=1; }
+    if(hit>=0){ rcount[hit]++; terrible++; isBad[ri]=1;
+                if(rows[ri].table==='new') terrNew++; else terrTried++; }
   }
 
-  const ages=rows.map(r=>(ref-r.time)/DAY).sort((a,b)=>a-b);
-  const median=ages.length?ages[Math.floor(ages.length/2)]:0;
+  /* Pooled median, kept for the freshness check whose band is calibrated on it. */
+  const medianOf = rs => { if(!rs.length) return null;
+    const a=rs.map(r=>(ref-r.time)/DAY).sort((x,y)=>x-y); return a[Math.floor(a.length/2)]; };
+  const median=medianOf(rows)??0;
+  /* Per table for the tile: new outnumbers tried by an order of magnitude here, so a
+     pooled median is the new table's median wearing both tables' name. Tried entries
+     are ones we have actually connected to, and their freshness is a different fact. */
+  const medNew=medianOf(nNew), medTried=medianOf(nTried);
   const over30=rows.filter(r=>(ref-r.time)>30*DAY).length;
   /* "distinct" is a unique address:port. On the peers.dat path that always equals
      the row count — mapAddr is keyed by CService, so one record per address:port,
@@ -1170,19 +1226,38 @@ function render_(){
   const T_full = tile('Addrman full', `${(100*(refSlots+nTried.length)/(NEW_SLOTS+TRIED_SLOTS)).toFixed(1)}%`,
     `${fmt(refSlots+nTried.length)} of ${fmt(NEW_SLOTS+TRIED_SLOTS)} slots`, null, null,
     `new ${(100*refSlots/NEW_SLOTS).toFixed(1)}% · tried ${(100*nTried.length/TRIED_SLOTS).toFixed(1)}%`);
-  const T_empty = tile('Empty slots', `${fmt(NEW_SLOTS-refSlots)} new / ${fmt(TRIED_SLOTS-nTried.length)} tried`,
-    `of ${fmt(NEW_SLOTS)} new · ${fmt(TRIED_SLOTS)} tried`);
-  const T_nt = tile('Distinct new / tried', `${fmt(nNew.length)} new / ${fmt(nTried.length)} tried`, '');
+  const T_empty = splitTile([{k:'Empty slots in new', v:fmt(NEW_SLOTS-refSlots), n:`of ${fmt(NEW_SLOTS)}`},
+                            {k:'Empty slots in tried', v:fmt(TRIED_SLOTS-nTried.length), n:`of ${fmt(TRIED_SLOTS)}`}]);
+  const T_nt = splitTile([{k:'Addresses in new', v:fmt(nNew.length)},
+                          {k:'Addresses in tried', v:fmt(nTried.length)}]);
   const T_uap = tile('Unique address:port', fmt(distinct),
     distinct===rows.length ? '' : `over ${fmt(rows.length)} slots`);
   const T_mp = tile('Multiple ports', fmt(multiPort), `of ${fmt(hosts)} unique address only`, null,
     'Addresses addrman holds on more than one port. Keys are CService, so each '
     + 'address:port is its own entry with its own slots, nAttempts and m_last_success.');
-  const T_age = tile('Median age', median.toFixed(1)+' d', 'since last refresh');
-  const T_terr = isPd
-    ? tile('Terrible', `${(100*share).toFixed(2)}%`, `${fmt(terrible)} entries${st[1]?' · '+st[1]:''}`, st[0], TERRIBLE_BANDS, TERRIBLE_SCALE)
-    : tile('Older than 30d', `${(100*over30/Math.max(rows.length,1)).toFixed(2)}%`,
-           `${fmt(over30)} entries · horizon arm only, a lower bound`, '--warning');
+  const T_age = splitTile(
+    [{k:'Median age in new', v:humanAge(medNew), n:medNew===null?'':`${medNew.toFixed(1)} d`},
+     {k:'Median age in tried', v:humanAge(medTried), n:medTried===null?'':`${medTried.toFixed(1)} d`}],
+    'Median time since each entry\'s nTime was last refreshed \u2014 by a peer re-advertising '
+    + 'it, or by a successful connection. Measured against the newest timestamp in the file, '
+    + 'not the wall clock.');
+  /* One tile, split by table. The halves carry no band colour of their own: the 4/8%
+     bands were calibrated on the pooled rate, and the two tables go terrible for
+     different reasons — new fills with stale gossip that was never dialled, while a
+     terrible tried entry is a peer that did connect once and has since stopped. The
+     banded pooled rate stays in the footer, where it reads once for both halves. */
+  const pctOf=(a,b)=>`${(100*a/Math.max(b,1)).toFixed(2)}%`;
+  const T_terr = splitTile(
+    [{k:`${isPd?'Terrible':'Older than 30d'} in new`, v:pctOf(terrNew,nNew.length),
+      n:`${fmt(terrNew)} of ${fmt(nNew.length)}`},
+     {k:`${isPd?'Terrible':'Older than 30d'} in tried`, v:pctOf(terrTried,nTried.length),
+      n:`${fmt(terrTried)} of ${fmt(nTried.length)}`}],
+    isPd ? TERRIBLE_BANDS + ' Each half is a rate over its own table, so the two do not '
+         + 'sum to the overall figure in the footer.'
+         : 'Horizon arm only \u2014 the attempt arms need peers.dat, so both halves are a lower bound.',
+    isPd ? `overall ${pctOf(terrible,rows.length)}${st[1]?' · '+st[1]:''} · ${TERRIBLE_SCALE}`
+         : `overall ${pctOf(over30,rows.length)} · horizon arm only, a lower bound`,
+    isPd ? st[0] : '--warning');
   const T_ref = tile('nRefCount > 1', fmt(multiRef), '');
   const T_refa = tile('nRefCount > 1 by address only', fmt(multiRefAddr), '', null,
     'Ports collapsed: references summed across every port of an address, so an '
@@ -1449,7 +1524,7 @@ function render_(){
   verdict('v-t1', isPd ? share <= 0.10 : null,
           isPd ? `${(100*share).toFixed(2)}%` : 'needs peers.dat');
 
-  verdict('v-t2', median >= 3 && median <= 30, `${median.toFixed(1)} days`);
+  verdict('v-t2', median >= 3 && median <= 30, humanAge(median));
 
   /* addresses on many ports */
   $('#cs-ports').textContent = portRanked.length
@@ -1636,6 +1711,16 @@ function bandTable(rows2,defs){
     + rows2.map(r=>{const t=r.counts.reduce((a,b)=>a+b,0);
         return `<tr><td>${r.name}</td>${r.counts.map(c=>`<td>${fmt(c)}</td>`).join('')}<td>${fmt(t)}</td></tr>`;}).join('')
     + `</tbody></table>`;
+}
+/* Two halves in one tile, separated by a vertical rule. Same outer box as tile().
+   `foot` runs under both halves for anything the two share — a scale, an overall rate. */
+function splitTile(halves,titleAttr,foot,sv){
+  return `<div class="tile split"${titleAttr?` title="${esc(titleAttr)}"`:''}><div class="srow">`
+       + halves.map(h=>`<div><div class="k">${esc(h.k)}</div><div class="v">${esc(h.v)}</div>`
+           + `${h.n?`<div class="n">${esc(h.n)}</div>`:''}</div>`).join('')
+       + `</div>`
+       + `${foot?`<div class="f">${sv?`<span class="sdot" style="background:var(${sv})"></span>`:''}${esc(foot)}</div>`:''}`
+       + `</div>`;
 }
 function tile(k,v,n,sv,titleAttr,foot){
   return `<div class="tile"${titleAttr?` title="${esc(titleAttr)}"`:''}><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`
