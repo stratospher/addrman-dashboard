@@ -92,8 +92,8 @@
   .tile .f{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45}
   /* one tile holding two related counts, divided by a rule rather than split into
      two cards: the outer box keeps the same footprint as any other tile. */
-  .tile.split{padding:0}
-  .tile.split>.srow{display:flex;align-items:stretch}
+  .tile.split{padding:0;display:flex;flex-direction:column}
+  .tile.split>.srow{display:flex;align-items:stretch;flex:1 1 auto}
   .tile.split>.srow>div{flex:1 1 0;min-width:0;padding:15px 17px}
   .tile.split>.srow>div+div{border-left:1px solid var(--border)}
   /* footer sits under both halves, so a shared scale or band reads once, not twice */
@@ -224,6 +224,8 @@
             <li><a href="#s-age"><span class="n">1.1</span> Age distribution</a></li>
             <li><a href="#s-net"><span class="n">1.2</span> Network distribution</a></li>
             <li><a href="#s-ref"><span class="n">1.3</span> nRefCount distribution</a></li>
+            <li><a href="#s-svc"><span class="n">1.4</span> Service flag distribution</a></li>
+            <li><a href="#s-tor"><span class="n">1.5</span> Tor exit IPs</a></li>
           </ul></li>
         <li><a href="#g2"><span class="n">2.</span> Reachability stats</a>
           <ul>
@@ -247,13 +249,7 @@
     <div class="intro">
       <p>Addrman health can be thought of as a combination of 3 aspects of all addresses inside addrman: <b>reachability health</b> +
         <b>eclipse resistance health</b> + the <b>ability to evict addresses</b> from addrman
-        <b>without unfairly evicting, or mass evicting, addresses that could still become useful</b>.
-        Eviction (<code>IsTerrible</code>: only if we evict stale IP addresses can we insert newer
-        ones) cuts both ways: too little and the tables silt up with stale gossip and nothing new
-        gets in, too much and we throw away peers that were merely offline for a while — and an
-        attacker who can push our own addresses over the <code>IsTerrible</code> line gets us to
-        clear the way for theirs. Ideally what we want here should be a steady trickle and not a
-        flood.</p>
+        without unfairly evicting, or mass evicting, addresses that could still become useful.</p>
 
       <h4>1. Reachability health</h4>
       <p class="lede">The more reachable addresses we hold, the more of our connection attempts
@@ -312,11 +308,14 @@
       </table>
 
       <h4>3. Ability to evict addresses from addrman &mdash; without over-evicting</h4>
-      <p class="lede">Addrman is a fixed size, so nothing new gets in unless something old goes out.
-        We want that happening steadily: evict too little and the tables fill up with addresses that
-        stopped answering long ago, evict too much and we lose peers that were only offline for a
-        while. The checks below look at how much of addrman is evictable right now, and how fresh
-        the addresses are overall.</p>
+      <p class="lede">Addrman is a fixed size, so nothing new gets in unless something old goes
+        out &mdash; only if we evict stale IP addresses can we insert newer ones. Eviction
+        (<code>IsTerrible</code>) cuts both ways: too little and the tables silt up with stale
+        gossip and nothing new gets in, too much and we throw away peers that were merely offline
+        for a while &mdash; and an attacker who can push our own addresses over the
+        <code>IsTerrible</code> line gets us to clear the way for theirs. Ideally what we want here
+        should be a steady trickle and not a flood. The checks below look at how much of addrman is
+        evictable right now, and how fresh the addresses are overall.</p>
       <table class="checks">
         <tbody>
           <tr>
@@ -342,6 +341,7 @@
     <div class="card">
       <div class="chead">
         <button class="btn" data-tbl="t-bands" type="button" aria-pressed="false">Table</button></div>
+      <p class="note" id="n-bands" style="margin:10px 0 0"></p>
       <div class="plot" id="c-bands" style="margin-top:14px"></div>
       <div class="legend" id="l-bands"></div>
       <div class="tbl" id="t-bands"></div>
@@ -360,9 +360,32 @@
     <div class="card">
       <div class="chead">
         <button class="btn" data-tbl="t-ref" type="button" aria-pressed="false">Table</button></div>
+      <p class="note" style="margin:10px 0 0">in new table an address:port can occupy upto 8 slots.
+        usually on clearnet nodes nRefCount can reach 2 for a few ip addresses. anything more is an
+        unusual trend.</p>
       <div class="cs" id="cs-ref"></div>
       <div class="plot" id="c-ref"></div>
       <div class="tbl" id="t-ref"></div>
+    </div>
+
+    <h3 class="sec" id="s-svc">1.4 Service flag distribution</h3>
+    <div class="card">
+      <div class="chead">
+        <button class="btn" data-tbl="t-svc" type="button" aria-pressed="false">Table</button></div>
+      <div class="plot" id="c-svc"></div>
+      <div class="tbl" id="t-svc"></div>
+    </div>
+
+    <h3 class="sec" id="s-tor">1.5 Tor exit IPs</h3>
+    <div class="card">
+      <div class="chead">
+        <button class="btn" data-tbl="t-tor" type="button" aria-pressed="false">Table</button></div>
+      <p class="note" style="margin:10px 0 0">for testing
+        <a href="https://github.com/bitcoin/bitcoin/pull/35578" target="_blank" rel="noopener">#35578</a>
+        &mdash; a node behind a SOCKS5 proxy might self advertise the tor exit's IP, so exits land in
+        addrman as fresh entries gossiped from many sources.</p>
+      <div class="cs" id="cs-tor"></div>
+      <div class="tbl" id="t-tor"></div>
     </div>
 
     <h2 class="grp" id="g2">2. Reachability stats</h2>
@@ -371,6 +394,7 @@
     <div class="card" id="card-conn">
       <div class="chead"><h3>Connection history</h3>
         <button class="btn" data-tbl="t-conn" type="button" aria-pressed="false">Table</button></div>
+      <p class="note" id="n-conn" style="margin:10px 0 14px"></p>
       <div class="cs" id="cs-conn"></div>
       <div class="plot" id="c-conn"></div>
       <div class="tbl" id="t-conn"></div>
@@ -443,6 +467,7 @@
     <div class="card" id="card-terr">
       <div class="chead">
         <button class="btn" data-tbl="t-terr" type="button" aria-pressed="false">Table</button></div>
+      <p class="note" id="n-terr" style="margin:10px 0 0"></p>
       <div class="plot" id="c-terr" style="margin-top:14px"></div>
       <div class="tbl" id="t-terr"></div>
     </div>
@@ -552,6 +577,7 @@
 
 <script src="peersdat.js"></script>
 <script src="reachable-data.js"></script>
+<script src="tor-exit-data.js"></script>
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
@@ -669,9 +695,11 @@ function activate(res, name){
 
 /* ---------- helpers ---------- */
 const iso = ts => new Date(ts*1000).toISOString().replace('T',' ').slice(0,16)+'Z';
-/* A median age is read for its order of magnitude, not its third digit: "10 days"
-   answers "is this stale?" where "9.8 d" just asks to be divided. Whole units only,
-   stepping up as soon as the smaller one stops being legible. Null for an empty table. */
+/* A median age is read for its order of magnitude, not its third digit: "5 months"
+   answers "is this stale?" where "152.4 d" just asks to be divided. Whole units,
+   stepping up as soon as the smaller one stops being legible — except in the 2–10 day
+   range, where whole days are coarse enough to be misread as wrong. Null for an
+   empty table. */
 function humanAge(d){
   if(d===null||d===undefined||!isFinite(d)) return '\u2014';
   const plural=(n,u)=>`${n} ${u}${n===1?'':'s'}`;
@@ -679,6 +707,9 @@ function humanAge(d){
   const mi=Math.round(d*1440);   if(mi<1)  return 'under a minute';
   if(mi<60) return plural(mi,'minute');
   const hr=Math.round(d*24);     if(hr<48) return plural(hr,'hour');
+  /* Under 10 days, one decimal: rounding to whole days here hid up to 12 hours, so
+     the headline disagreed with the figure it was derived from. */
+  if(d<10) return `${d.toFixed(1)} days`;
   const dy=Math.round(d);        if(dy<60) return plural(dy,'day');
   const mo=Math.round(d/30.44);  if(mo<12) return plural(mo,'month');
   return plural(Math.round(d/365.25),'year');
@@ -967,7 +998,7 @@ function barsRankedH(mount, items, opts){
   mount.querySelectorAll('rect[data-i]').forEach(r=>{
     r.addEventListener('mousemove',e=>{
       const d=items[+r.dataset.i];
-      showTip(e,d.label,[`${fmt(d.n)} ${(opts&&opts.unit)||'addresses'}${d.pct?' · '+d.pct:''}`].concat(
+      showTip(e,d.label,[`${fmt(d.n)} ${(opts&&opts.unit)||'entries'}${d.pct?' · '+d.pct:''}`].concat(
         SEGS.map((sg,j)=>`${sg.k}: ${fmt(d.parts[j])} (${(100*d.parts[j]/d.n).toFixed(1)}%)`)));
     });
     r.addEventListener('mouseleave',hideTip);
@@ -1226,18 +1257,23 @@ function render_(){
   const T_full = tile('Addrman full', `${(100*(refSlots+nTried.length)/(NEW_SLOTS+TRIED_SLOTS)).toFixed(1)}%`,
     `${fmt(refSlots+nTried.length)} of ${fmt(NEW_SLOTS+TRIED_SLOTS)} slots`, null, null,
     `new ${(100*refSlots/NEW_SLOTS).toFixed(1)}% · tried ${(100*nTried.length/TRIED_SLOTS).toFixed(1)}%`);
-  const T_empty = splitTile([{k:'Empty slots in new', v:fmt(NEW_SLOTS-refSlots), n:`of ${fmt(NEW_SLOTS)}`},
-                            {k:'Empty slots in tried', v:fmt(TRIED_SLOTS-nTried.length), n:`of ${fmt(TRIED_SLOTS)}`}]);
-  const T_nt = splitTile([{k:'Addresses in new', v:fmt(nNew.length)},
-                          {k:'Addresses in tried', v:fmt(nTried.length)}]);
+  const T_empty = splitTile([{k:'Empty slots in new table', v:fmt(NEW_SLOTS-refSlots), n:`of ${fmt(NEW_SLOTS)}`},
+                            {k:'Empty slots in tried table', v:fmt(TRIED_SLOTS-nTried.length), n:`of ${fmt(TRIED_SLOTS)}`}]);
+  /* peers.dat keeps one record per CService, so a row there is one address:port.
+     getrawaddrman emits one row per occupied bucket slot, so a new address held at
+     nRefCount 3 is three rows — only the label can keep those apart. Tried occupies
+     exactly one slot per entry on both paths, so that half is address:port either way. */
+  const T_nt = splitTile([{k:isPd?'Address:port in new table':'Occupied slots in new table',
+                           v:fmt(nNew.length)},
+                          {k:'Address:port in tried table', v:fmt(nTried.length)}]);
   const T_uap = tile('Unique address:port', fmt(distinct),
     distinct===rows.length ? '' : `over ${fmt(rows.length)} slots`);
   const T_mp = tile('Multiple ports', fmt(multiPort), `of ${fmt(hosts)} unique address only`, null,
     'Addresses addrman holds on more than one port. Keys are CService, so each '
     + 'address:port is its own entry with its own slots, nAttempts and m_last_success.');
   const T_age = splitTile(
-    [{k:'Median age in new', v:humanAge(medNew), n:medNew===null?'':`${medNew.toFixed(1)} d`},
-     {k:'Median age in tried', v:humanAge(medTried), n:medTried===null?'':`${medTried.toFixed(1)} d`}],
+    [{k:'Median age in new table', v:humanAge(medNew)},
+     {k:'Median age in tried table', v:humanAge(medTried)}],
     'Median time since each entry\'s nTime was last refreshed \u2014 by a peer re-advertising '
     + 'it, or by a successful connection. Measured against the newest timestamp in the file, '
     + 'not the wall clock.');
@@ -1248,9 +1284,9 @@ function render_(){
      banded pooled rate stays in the footer, where it reads once for both halves. */
   const pctOf=(a,b)=>`${(100*a/Math.max(b,1)).toFixed(2)}%`;
   const T_terr = splitTile(
-    [{k:`${isPd?'Terrible':'Older than 30d'} in new`, v:pctOf(terrNew,nNew.length),
+    [{k:`${isPd?'Terrible':'Older than 30d'} in new table`, v:pctOf(terrNew,nNew.length),
       n:`${fmt(terrNew)} of ${fmt(nNew.length)}`},
-     {k:`${isPd?'Terrible':'Older than 30d'} in tried`, v:pctOf(terrTried,nTried.length),
+     {k:`${isPd?'Terrible':'Older than 30d'} in tried table`, v:pctOf(terrTried,nTried.length),
       n:`${fmt(terrTried)} of ${fmt(nTried.length)}`}],
     isPd ? TERRIBLE_BANDS + ' Each half is a rate over its own table, so the two do not '
          + 'sum to the overall figure in the footer.'
@@ -1258,7 +1294,7 @@ function render_(){
     isPd ? `overall ${pctOf(terrible,rows.length)}${st[1]?' · '+st[1]:''} · ${TERRIBLE_SCALE}`
          : `overall ${pctOf(over30,rows.length)} · horizon arm only, a lower bound`,
     isPd ? st[0] : '--warning');
-  const T_ref = tile('nRefCount > 1', fmt(multiRef), '');
+  const T_ref = tile('nRefCount > 1 by address:port', fmt(multiRef), '');
   const T_refa = tile('nRefCount > 1 by address only', fmt(multiRefAddr), '', null,
     'Ports collapsed: references summed across every port of an address, so an '
     + 'address on two ports with one reference each counts as 2.');
@@ -1284,6 +1320,15 @@ function render_(){
   /* age bands */
   const ageRows=[{name:'new',counts:count(nNew,AGE_BANDS,r=>(ref-r.time)/DAY)},
                  {name:'tried',counts:count(nTried,AGE_BANDS,r=>(ref-r.time)/DAY)}];
+  /* The medians, then whichever diagnosis applies. 3 days is the same floor the v-t2
+     check uses; past 10 days a new table has stopped being refreshed by ordinary gossip. */
+  const ageDays=d=>d===null?'\u2014':d.toFixed(1);
+  let bandsNote=`median age of new table is ${ageDays(medNew)} days and ${ageDays(medTried)} days in tried table.`;
+  if((medNew!==null&&medNew<3)||(medTried!==null&&medTried<3))
+    bandsNote+=' having this fresh new table usually means an addr spam is happening in the network.';
+  if(medNew!==null&&medNew>10)
+    bandsNote+=' having an old new table usually means your node is offline and not receiving fresh gossip.';
+  $('#n-bands').textContent=bandsNote;
   stackedBands($('#c-bands'),ageRows,AGE_BANDS);
   $('#l-bands').innerHTML=legend(AGE_BANDS);
   $('#t-bands').innerHTML=bandTable(ageRows,AGE_BANDS);
@@ -1309,7 +1354,7 @@ function render_(){
        + `<td>${d.v?(100*d.tried/d.v).toFixed(2)+'%':'—'}</td></tr>`).join('')
     + `</tbody></table>`;
 
-  /* nRefCount over distinct new-table addresses; 1..8 always shown so the unused
+  /* nRefCount over distinct new-table address:port entries; 1..8 always shown so the unused
      headroom above the observed maximum stays visible */
   const refSeries=[];
   for(let i=1;i<=MAXREF;i++) refSeries.push({v:refHist[i], full:'nRefCount '+i, label:String(i)});
@@ -1317,17 +1362,134 @@ function render_(){
   const topRef = refSeries.reduce((m,d,i)=>d.v>0?i+1:m, 0);
   $('#cs-ref').textContent =
     `mean nRefCount ${meanRef.toFixed(3)} · highest observed ${topRef || 0}`;
-  columnChart($('#c-ref'), refSeries, {aria:'new-table addresses by nRefCount', pctOf:refMap.size});
+  columnChart($('#c-ref'), refSeries, {aria:'new-table address:port entries by nRefCount', pctOf:refMap.size});
   $('#t-ref').innerHTML =
-    `<table><thead><tr><th>nRefCount</th><th>Addresses</th><th>% of new addresses</th><th>Slots used</th></tr></thead><tbody>`
+    `<table><thead><tr><th>nRefCount</th><th>Address:port</th><th>% of new address:port</th><th>Slots used</th></tr></thead><tbody>`
     + refSeries.map((d,i)=>`<tr><td>${i+1}</td><td>${fmt(d.v)}</td>`
        + `<td>${(100*d.v/Math.max(refMap.size,1)).toFixed(3)}%</td><td>${fmt(d.v*(i+1))}</td></tr>`).join('')
     + `<tr><td><b>Total</b></td><td><b>${fmt(refMap.size)}</b></td><td><b>100%</b></td><td><b>${fmt(refSlots)}</b></td></tr></tbody></table>`;
+
+  /* service flags. NETWORK/BLOOM/WITNESS/COMPACT_FILTERS/NETWORK_LIMITED/P2P_V2 are the
+     live ServiceFlags in src/protocol.h; XTHIN is historical and the UTREEXO, REPLACE_BY_FEE,
+     REDUCED_DATA and LIBRE_RELAY bits are advertised by forks and proposals rather than by
+     Core, but they do turn up in a real address book. Any other set bit is reported the way
+     serviceFlagsToStr() does it, as UNKNOWN[2^n]. Named bits are always listed even at zero,
+     so an absent one reads as a fact rather than as a missing row. */
+  const SVC_NAMED=[[0,'NETWORK'],[2,'BLOOM'],[3,'WITNESS'],[4,'XTHIN'],[6,'COMPACT_FILTERS'],
+                   [10,'NETWORK_LIMITED'],[11,'P2P_V2'],[12,'UTREEXO'],[13,'UTREEXO_ARCHIVE'],
+                   [24,'UTREEXO_TMP'],[26,'REPLACE_BY_FEE'],[27,'REDUCED_DATA'],[29,'LIBRE_RELAY']];
+  /* An entry carrying every named bit is claiming to be everything at once, which is a
+     claim about the advertiser rather than about any one service. It gets its own row and
+     is kept out of the per-bit rows entirely, so those read as genuine support. */
+  const SVC_ALL=SVC_NAMED.reduce((m,d)=>m|(1n<<BigInt(d[0])), 0n);
+  /* peers.dat hands back a Number when the value fits and a decimal string when it does
+     not; getrawaddrman always emits a Number. BigInt covers both and the bits above 2^31,
+     which a JS bitwise operator would silently truncate. */
+  const svcOf=v=>{
+    if(typeof v==='number' && isFinite(v)) return BigInt(Math.trunc(v));
+    const t=String(v==null?'':v).trim();
+    return /^[0-9]+$/.test(t) ? BigInt(t) : 0n;
+  };
+  const svcKnown=new Set(SVC_NAMED.map(d=>d[0]));
+  const svcSeen=new Map();                    /* named bit -> {n, tried} */
+  const svcAll={n:0,tried:0};
+  /* Every unnamed bit collapses into one row. They are rare, unrelated to each other and
+     interesting only as "advertises something we do not recognise", so a row each would be
+     a column of ones. An entry setting two of them still counts once; the bits themselves
+     are listed beside the row. */
+  const svcUnk={n:0,tried:0}, svcUnkBits=new Set();
+  let svcNone=0;
+  for(const r of rows){
+    const sv=svcOf(r.services);
+    if(sv===0n) svcNone++;
+    else if((sv&SVC_ALL)===SVC_ALL){ svcAll.n++; if(r.table==='tried') svcAll.tried++; }
+    else {
+      let unk=false;
+      for(let b=0n, x=sv; x>0n; b++, x>>=1n) if(x&1n){
+        const k=Number(b);
+        if(!svcKnown.has(k)){ unk=true; svcUnkBits.add(k); continue; }
+        let e=svcSeen.get(k);
+        if(!e){ e={n:0,tried:0}; svcSeen.set(k,e); }
+        e.n++; if(r.table==='tried') e.tried++;
+      }
+      if(unk){ svcUnk.n++; if(r.table==='tried') svcUnk.tried++; }
+    }
+  }
+  const mkSvcRow=(name,bit,e,extra)=>({k:name, v:e.n, bit:bit, tried:e.tried, neu:e.n-e.tried,
+    sub:[`${fmt(e.n-e.tried)} new · ${fmt(e.tried)} tried`].concat(extra||[])});
+  const svcUnkList=[...svcUnkBits].sort((a,b)=>a-b).map(b=>`2^${b}`).join(', ');
+  const svcRows=[mkSvcRow('All flags set',null,svcAll)]
+    .concat(SVC_NAMED.map(d=>mkSvcRow(d[1], d[0], svcSeen.get(d[0])||{n:0,tried:0})))
+    .concat([mkSvcRow('Unknown flags',null,svcUnk, svcUnkList?[`bits ${svcUnkList}`]:[])]);
+  const svcPct=n=>`${(100*n/Math.max(rows.length,1)).toFixed(2)}%`;
+  barsH($('#c-svc'), svcRows, {aria:'entries by service flag', pctOf:rows.length});
+  $('#t-svc').innerHTML =
+    `<table><thead><tr><th>Bit</th><th style="text-align:left">Flag</th><th>Entries</th>`
+    + `<th>new</th><th>tried</th><th>% of addrman</th><th>% in tried</th></tr></thead><tbody>`
+    + svcRows.map(d=>`<tr><td>${d.bit!==null?'2^'+d.bit:(d.k==='Unknown flags'&&svcUnkList?esc(svcUnkList):'—')}</td>`
+       + `<td style="text-align:left">${d.bit===null?`<b>${esc(d.k)}</b>`:esc(d.k)}</td>`
+       + `<td>${fmt(d.v)}</td><td>${fmt(d.neu)}</td><td>${fmt(d.tried)}</td>`
+       + `<td>${svcPct(d.v)}</td><td>${d.v?(100*d.tried/d.v).toFixed(2)+'%':'—'}</td></tr>`).join('')
+    + `<tr><td>—</td><td style="text-align:left"><b>No flags at all</b></td><td><b>${fmt(svcNone)}</b></td>`
+    + `<td colspan="2">—</td><td><b>${svcPct(svcNone)}</b></td><td>—</td></tr>`
+    + `</tbody></table>`;
+
+  /* Tor exit relays. canonKey() reduces both sides to raw address bytes, so an exit
+     listed as 2a0b:f4c2::1 still matches an entry we render differently. Port is not part
+     of the key: the list names relays, not services, and a node reachable at an exit IP is
+     the same shared machine whatever port it answers on. */
+  const TX = (typeof window.TOR_EXITS!=='undefined' && window.TOR_EXITS && window.TOR_EXITS.ips)
+    ? window.TOR_EXITS : null;
+  const torClear=rows.filter(r=>r.network==='ipv4'||r.network==='ipv6');
+  if(!TX){
+    $('#cs-tor').textContent='No exit list loaded — run ./refresh-tor-exits.sh to write tor-exit-data.js.';
+    $('#t-tor').innerHTML='';
+  } else {
+    const exitSet=new Set();
+    for(const ip of TX.ips.split('\n')){ const k=canonKey(ip,''); if(k) exitSet.add(k); }
+    /* Slots, not entries: a new-table address sits in nRefCount of them. On the
+       getrawaddrman path a row already is one occupied slot, so it counts as 1. */
+    const torSlots=r=>(isPd && r.table==='new') ? (r.refcount||0) : 1;
+    const torHits=[], torIPs=new Set();
+    let slotsNew=0, slotsTried=0;
+    for(const r of torClear){
+      if(r._ra===undefined) r._ra=canonKey(r.address,'');
+      if(!r._ra || !exitSet.has(r._ra)) continue;
+      torHits.push(r); torIPs.add(r.address);
+      if(r.table==='tried') slotsTried+=torSlots(r); else slotsNew+=torSlots(r);
+    }
+    $('#cs-tor').textContent =
+      `${fmt(torIPs.size)} tor exit IP addresses occupying ${fmt(slotsNew+slotsTried)} slots `
+      + `in the addrman (${fmt(slotsNew)} new, ${fmt(slotsTried)} tried)`;
+    const torCap=Math.min(torHits.length,500);
+    $('#t-tor').innerHTML = torHits.length
+      ? `<table><thead><tr><th>#</th><th style="text-align:left">Address:port</th><th>Net</th>`
+        + `<th>Table</th><th>Age (d)</th><th>Attempts</th><th>Ever connected</th></tr></thead><tbody>`
+        + torHits.slice(0,torCap).map((r,i)=>`<tr><td>${i+1}</td>`
+            + `<td style="text-align:left">${esc(r.address)}:${r.port}</td><td>${esc(r.network)}</td>`
+            + `<td>${r.table}</td><td>${((ref-r.time)/DAY).toFixed(1)}</td>`
+            + `<td>${isPd?fmt(r.nattempts):'—'}</td>`
+            + `<td>${isPd?(r.last_success>0?'yes':'no'):'—'}</td></tr>`).join('')
+        + `</tbody></table>`
+        + (torHits.length>torCap
+            ? `<p style="color:var(--muted);font-size:14.5px;margin:8px 0 0">Showing the first ${fmt(torCap)} of ${fmt(torHits.length)}.</p>`
+            : '')
+      : `<p style="color:var(--text-secondary);font-size:15px;margin:0">No entry in this file sits on a listed Tor exit IP.</p>`;
+  }
 
   /* attempts + terrible (peers.dat only) */
   if(isPd){
     $('#card-conn').classList.remove('off');
     const attempted=connOK+connFail;
+    /* Same comparison the v-r1 check makes, spelled out with its two operands so the
+       verdict's bare "423 vs 7,018" has somewhere to be read from. */
+    const connCmp = connOK>connFail ? '>' : connOK<connFail ? '<' : '=';
+    $('#n-conn').textContent =
+      `since Successful connections = ${fmt(connOK)} ${connCmp} Attempted but failed connections `
+      + `= ${fmt(connFail)}, `
+      + (connOK>connFail ? 'this means our addrman is more reachable. Yay!'
+       : connOK<connFail ? 'this means our addrman is more unreachable.'
+       : 'our addrman is evenly split between the two.');
     $('#cs-conn').textContent =
       `Successful + unsuccessful = attempted (${fmt(connOK)} + ${fmt(connFail)} = ${fmt(attempted)}); `
       + `attempted + not attempted = every entry (${fmt(attempted)} + ${fmt(connNone)} = ${fmt(rows.length)}).`;
@@ -1372,6 +1534,15 @@ function render_(){
     $('#l-ls').innerHTML=legend(LS_BANDS);
     $('#t-ls').innerHTML=bandTable(lsRows,LS_BANDS);
 
+    /* Evictability is a new-table property: Add_ overwrites a colliding slot only when the
+       entry sitting in it is terrible, and nothing is ever dropped from tried for being
+       terrible. Both tables are still read by GetAddr_, which withholds a terrible entry
+       from ADDR replies either way. The arm breakdown below counts every entry, so the note
+       names both scopes rather than leaving a new-table number on an all-of-addrman chart. */
+    $('#n-terr').textContent =
+      `${fmt(terrible)} address:port entries which is ${pctOf(terrible,rows.length)} in full addrman is terrible.`
+      + ` new table: ${fmt(terrNew)} (${pctOf(terrNew,nNew.length)} of new, evictable)`
+      + ` · tried table: ${fmt(terrTried)} (${pctOf(terrTried,nTried.length)} of tried).`;
     const items=REASONS.map((k,i)=>({k,v:icount[i]}));
     barsH($('#c-terr'),items,{aria:'terrible arms',pctOf:rows.length});
     $('#t-terr').innerHTML=
@@ -1489,7 +1660,7 @@ function render_(){
   for(const r of rows) if(r.table==='new' && (r.network==='ipv4'||r.network==='ipv6') && r.refcount>1){
     const k=r.address+':'+r.port; if(!seenRC.has(k)){ seenRC.add(k); refClear++; }
   }
-  verdict('v-e2', refClear < 100, `${fmt(refClear)} addresses`);
+  verdict('v-e2', refClear < 100, `${fmt(refClear)} address:port`);
 
   /* Lift: a netgroup's connect rate against the table-wide connect rate, so a group is
      not flagged for its size alone. An earlier version took min(dial ratio, connect ratio)
@@ -1576,7 +1747,7 @@ function render_(){
         ? ` · largest netgroup holds ${fmt(ranked[0].n)} entries (${(100*ranked[0].n/gTot).toFixed(2)}% of all)`
           + ` · top 10 netgroups hold ${fmt(top10)} entries (${(100*top10/gTot).toFixed(1)}%)`
         : '');
-  barsRankedH($('#c-ng'), shown, {aria:'netgroups ranked by address count',
+  barsRankedH($('#c-ng'), shown, {aria:'netgroups ranked by entry count',
                                   segs:ngSegs, norm:$('#gnorm').checked});
   $('#l-ng').innerHTML=legend(ngSegs);
   const gCap=Math.min(ranked.length,500);
@@ -1588,7 +1759,7 @@ function render_(){
         + `100% connected is the most any netgroup can manage, so lift cannot exceed `
         + `${(1/ngBase).toFixed(1)}× on this file.</p>`
       : '')
-    + `<table><thead><tr><th>#</th><th style="text-align:left">Netgroup</th><th>Addresses</th><th>% of set</th>`
+    + `<table><thead><tr><th>#</th><th style="text-align:left">Netgroup</th><th>Entries</th><th>% of set</th>`
     + ngSegs.map(sg=>`<th>${esc(sg.k)}</th>`).join('')
     + `<th>% dialled</th><th>% connected</th><th>Lift</th></tr></thead><tbody>`
     + ranked.slice(0,gCap).map((g,i)=>{
@@ -1693,7 +1864,7 @@ function render_(){
   const badList=[];
   for(let i=0;i<rows.length && badList.length<400;i++) if(isBad[i]) badList.push(rows[i]);
   $('#t-map').innerHTML=
-    `<table><thead><tr><th>Address</th><th>Net</th><th>Age (d)</th><th>Attempts</th><th>Refs</th><th style="text-align:left">Arms</th></tr></thead><tbody>`
+    `<table><thead><tr><th>Address:port</th><th>Net</th><th>Age (d)</th><th>Attempts</th><th>Refs</th><th style="text-align:left">Arms</th></tr></thead><tbody>`
     + badList.map(r=>`<tr><td>${esc(r.address)}:${r.port}</td><td>${esc(r.network)}</td>`
         + `<td>${((ref-r.time)/DAY).toFixed(1)}</td><td>${r.nattempts===null?'—':r.nattempts}</td>`
         + `<td>${r.refcount===null?'—':r.refcount}</td>`
