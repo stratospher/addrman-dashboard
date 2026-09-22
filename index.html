@@ -11,7 +11,7 @@
     --text-primary:#0b0b0b; --text-secondary:#52514e; --muted:#898781;
     --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
     --series-1:#2a78d6;
-    --band-1:#86b6ef; --band-2:#5598e7; --band-3:#2a78d6; --band-4:#1c5cab; --band-5:#104281;
+    --band-1:#86b6ef; --band-2:#5598e7; --band-3:#2a78d6; --band-4:#1c5cab; --band-5:#104281; --band-6:#0a2d5b;
     --on-band-light:#0b0b0b; --on-band-dark:#ffffff;
     --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
   }
@@ -22,7 +22,7 @@
       --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
       --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
       --series-1:#3987e5;
-      --band-1:#184f95; --band-2:#256abf; --band-3:#3987e5; --band-4:#6da7ec; --band-5:#9ec5f4;
+      --band-1:#184f95; --band-2:#256abf; --band-3:#3987e5; --band-4:#6da7ec; --band-5:#9ec5f4; --band-6:#c9dffa;
       --on-band-light:#ffffff; --on-band-dark:#0b0b0b;
     }
   }
@@ -32,7 +32,7 @@
     --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
     --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
     --series-1:#3987e5;
-    --band-1:#184f95; --band-2:#256abf; --band-3:#3987e5; --band-4:#6da7ec; --band-5:#9ec5f4;
+    --band-1:#184f95; --band-2:#256abf; --band-3:#3987e5; --band-4:#6da7ec; --band-5:#9ec5f4; --band-6:#c9dffa;
     --on-band-light:#ffffff; --on-band-dark:#0b0b0b;
   }
   *{box-sizing:border-box}
@@ -842,8 +842,10 @@ function barsH(mount, items, opts){
 }
 
 /* ---------- band definitions ---------- */
-const AGE_BANDS=[{k:'<1d',hi:1,v:'--band-1'},{k:'1–7d',hi:7,v:'--band-2'},
-  {k:'7–14d',hi:14,v:'--band-3'},{k:'14–30d',hi:30,v:'--band-4'},{k:'>30d',hi:Infinity,v:'--band-5'}];
+/* ages are in days, so the freshest band is 10 minutes expressed that way. */
+const AGE_BANDS=[{k:'<10m',hi:10/1440,v:'--band-1'},{k:'10m–1d',hi:1,v:'--band-2'},
+  {k:'1–7d',hi:7,v:'--band-3'},{k:'7–14d',hi:14,v:'--band-4'},
+  {k:'14–30d',hi:30,v:'--band-5'},{k:'>30d',hi:Infinity,v:'--band-6'}];
 const LS_BANDS=[{k:'<1d',hi:1,v:'--band-1'},{k:'1–7d',hi:7,v:'--band-2'},
   {k:'7–30d',hi:30,v:'--band-3'},{k:'30–90d',hi:90,v:'--band-4'},{k:'>90d',hi:Infinity,v:'--band-5'}];
 const ATT_BANDS=[{k:'0',hi:1,v:'--band-1'},{k:'1',hi:2,v:'--band-2'},{k:'2',hi:3,v:'--band-3'},
