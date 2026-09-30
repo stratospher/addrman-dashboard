@@ -60,6 +60,12 @@ matters more than freshness is that the list and the `peers.dat` are roughly
 contemporaneous — matching a months-old addrman snapshot against today's exits
 compares two different networks.
 
+Each run also updates `tor-exit-history-data.js`, the union of every exit list
+this script has ever fetched. Section 1.5 uses `current − history` to show
+addresses that were a Tor exit at some point but have since retired — a floor,
+not an exact count, since relays that retired before the first refresh were
+never recorded.
+
 The list covers exits that permit exiting to `check.torproject.org`, which is
 the usual definition but not every address a relay has ever exited from.
 Onionoo's `exit_addresses` field is the exhaustive source if this ever needs to
@@ -74,5 +80,17 @@ unaffected.
     peersdat.js         peers.dat parser + addrman bucket selection
     reachable-data.js   bitnod.es node export (generated)
     refresh-reachable.sh
-    tor-exit-data.js    Tor Project bulk exit list (generated)
+    tor-exit-data.js          Tor Project bulk exit list (generated)
+    tor-exit-history-data.js  union of every exit list fetch (generated)
     refresh-tor-exits.sh
+
+## Caveats
+
+Two things the page takes on trust, both of which a generated or crafted file
+can break.
+
+There is no dump timestamp in `peers.dat`, so "now" is taken to be the newest
+`nTime` in the file.
+
+The header's `nNew` and `nTried` are believed, and exactly that many records are
+read, the way Core does it.
