@@ -342,6 +342,7 @@
       <div class="chead">
         <button class="btn" data-tbl="t-bands" type="button" aria-pressed="false">Table</button></div>
       <p class="note" id="n-bands" style="margin:10px 0 0"></p>
+      <div class="cs" id="cs-bands" style="margin:10px 0 0"></div>
       <div class="plot" id="c-bands" style="margin-top:14px"></div>
       <div class="legend" id="l-bands"></div>
       <div class="tbl" id="t-bands"></div>
@@ -1331,9 +1332,26 @@ function render_(){
   if(medNew!==null&&medNew>10)
     bandsNote+=' having an old new table usually means your node is offline and not receiving fresh gossip.';
   $('#n-bands').textContent=bandsNote;
+  /* The <10m band spelled out. ref is the newest nTime in the file, so this means
+     "within 10 minutes of the freshest entry", not of wall-clock now — which is why
+     the count is never zero. Newest first, and the table toggle lists them. */
+  const fresh=rows.filter(r=>(ref-r.time)/DAY<10/1440).sort((a,b)=>b.time-a.time);
+  $('#cs-bands').textContent =
+    `${fmt(fresh.length)} ${fresh.length===1?'address has':'addresses have'} nTime < 10 min.`;
   stackedBands($('#c-bands'),ageRows,AGE_BANDS);
   $('#l-bands').innerHTML=legend(AGE_BANDS);
-  $('#t-bands').innerHTML=bandTable(ageRows,AGE_BANDS);
+  const freshCap=Math.min(fresh.length,50);
+  $('#t-bands').innerHTML=bandTable(ageRows,AGE_BANDS)
+    + `<p class="cs" style="margin:16px 0 6px">Entries under 10 minutes old, newest first</p>`
+    + `<table><thead><tr><th>#</th><th style="text-align:left">Address:port</th><th>Net</th>`
+    + `<th>Table</th><th>Age (s)</th></tr></thead><tbody>`
+    + fresh.slice(0,freshCap).map((r,i)=>`<tr><td>${i+1}</td>`
+        + `<td style="text-align:left">${esc(r.address)}:${r.port}</td><td>${esc(r.network)}</td>`
+        + `<td>${r.table}</td><td>${fmt(ref-r.time)}</td></tr>`).join('')
+    + `</tbody></table>`
+    + (fresh.length>freshCap
+        ? `<p style="color:var(--muted);font-size:14.5px;margin:8px 0 0">Showing the first ${fmt(freshCap)} of ${fmt(fresh.length)}.</p>`
+        : '');
 
   /* network mix — always shown; both sources carry `network` */
   const NET_ORDER=['ipv4','ipv6','onion','i2p','cjdns'];
