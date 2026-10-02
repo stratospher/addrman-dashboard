@@ -192,6 +192,7 @@
     <h3>Open an addrman</h3>
     <p>Drag a file here, or</p>
     <label class="filelabel">Choose peers.dat<input type="file" id="file" accept=".json,.gz,.dat"></label>
+    <div style="margin-top:12px"><button class="btn" id="sample" type="button">Load sample peers.dat</button></div>
     <!-- getrawaddrman source — commented out
     <div class="srcs">
       <div class="srcbox">
@@ -1971,6 +1972,23 @@ async function handle(file){
   }catch(ex){ fail(ex && ex.message ? ex.message : String(ex)); }
 }
 $('#file').addEventListener('change',e=>{ if(e.target.files[0]) handle(e.target.files[0]); });
+/* The weekly snapshot is ~3 MB, so it is only pulled in when asked for. A <script>
+   rather than fetch() so this also works from file://. */
+$('#sample').addEventListener('click', async ()=>{
+  try{
+    if(!window.SAMPLE_PEERS) await new Promise((ok,ko)=>{
+      const s=document.createElement('script'); s.src='sample-peers-data.js';
+      s.onload=ok; s.onerror=()=>ko(new Error('Could not load sample-peers-data.js. Run ./refresh-sample-peers.sh'));
+      document.head.appendChild(s);
+    });
+    if(typeof DecompressionStream==='undefined')
+      throw new Error('This browser cannot decompress the sample (no DecompressionStream).');
+    const sp=window.SAMPLE_PEERS, bin=Uint8Array.from(atob(sp.gz), c=>c.charCodeAt(0));
+    const buf=await new Response(new Blob([bin]).stream()
+                .pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+    handle(new File([buf], sp.name));
+  }catch(ex){ fail(ex && ex.message ? ex.message : String(ex)); }
+});
 const dz=$('#drop');
 ['dragenter','dragover'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add('over');}));
 ['dragleave','drop'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove('over');}));

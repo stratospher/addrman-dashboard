@@ -12,6 +12,12 @@ Copy the file first — a running node rewrites it every 15 minutes.
 
     cp ~/.bitcoin/peers.dat /tmp/peers.dat
 
+Or click "Load sample peers.dat" for the newest weekly snapshot from
+[peer-observer's hal node](https://demo.peer.observer/peers-dat-snapshots/hal/).
+`sample-peers-data.js` holds it, decompressed from `.zst` and re-stored as
+gzip + base64, and a GitHub Action refreshes it every Wednesday at 00:00 UTC
+(`./refresh-sample-peers.sh` by hand).
+
 ## What it shows
 
 The page opens with a check-list covering three aspects of addrman health —
@@ -83,6 +89,8 @@ unaffected.
     tor-exit-data.js          Tor Project bulk exit list (generated)
     tor-exit-history-data.js  union of every exit list fetch (generated)
     refresh-tor-exits.sh
+    sample-peers-data.js      newest hal peers.dat snapshot (generated)
+    refresh-sample-peers.sh
 
 ## Caveats
 

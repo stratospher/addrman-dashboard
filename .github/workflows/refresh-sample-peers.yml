@@ -1,0 +1,30 @@
+name: Refresh sample peers.dat
+
+on:
+  schedule:
+    - cron: '0 0 * * 3'  # Wed, 00:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refresh sample-peers-data.js
+        run: ./refresh-sample-peers.sh
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add sample-peers-data.js
+          if git diff --cached --quiet; then
+            echo "no changes"
+            exit 0
+          fi
+          git commit -m "refresh sample-peers-data.js"
+          git push
